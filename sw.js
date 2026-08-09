@@ -1,21 +1,41 @@
 // Anrede — app-shell cache.
-// v2: network-first for anything that can change (HTML/manifest), so a
-// Vercel deploy reaches already-installed users on next load even if
-// sw.js's own bytes didn't change. Cache-first only for icons, which are
-// immutable once shipped. Bump CACHE_NAME on breaking changes to force
-// a clean cutover.
-const CACHE_NAME = "anrede-shell-v2";
+// v3: added the six local persona-portrait SVGs (avatars/) introduced by
+// the Sprachfreund visual redesign; CACHE_NAME bumped per the "Important
+// for future updates" section of README.md so installed users actually
+// pick up this change instead of running the old v2 worker forever.
+// Cache-first only for icons/avatars, which are immutable once shipped.
+// Network-first for anything that can change (HTML/manifest).
+//
+// v3 also hardens install: v2 used cache.addAll(), which rejects the
+// *entire* install step if even one listed file 404s — meaning a single
+// missing icon silently prevented the service worker from ever installing
+// (caught by index.html's empty catch). We now cache each file
+// independently via allSettled, so one missing asset can't take down the
+// whole offline shell.
+const CACHE_NAME = "anrede-shell-v3";
 const IMMUTABLE_FILES = [
   "./icon-192.png",
   "./icon-512.png",
   "./icon-512-maskable.png",
-  "./apple-touch-icon.png"
+  "./apple-touch-icon.png",
+  "./avatars/hoffmann.svg",
+  "./avatars/bauer.svg",
+  "./avatars/keller.svg",
+  "./avatars/max.svg",
+  "./avatars/lea.svg",
+  "./avatars/jonas.svg"
 ];
 const NETWORK_FIRST_FILES = ["./index.html", "./manifest.json", "./"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(IMMUTABLE_FILES))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        IMMUTABLE_FILES.map((f) =>
+          cache.add(f).catch((err) => console.warn("sw: failed to precache", f, err))
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
