@@ -109,6 +109,15 @@
     flex-direction:column;
     height: 100vh;
     height: 100dvh;
+    /* --vvh is set from JS via window.visualViewport and overrides the
+       lines above once available. iOS Safari's 100dvh does not reliably
+       track the *visual* viewport when the software keyboard opens —
+       confirmed bug: the bottom-sheet persona picker stayed visible
+       under the input bar specifically while the keyboard was open,
+       because #app's height (and therefore the sheet's bottom:0 anchor)
+       was computed against a taller, stale viewport. See visualViewport
+       handling near the end of the module script. */
+    height: var(--vvh, 100dvh);
     max-width: 560px;
     margin: 0 auto;
     position: relative;
@@ -1139,6 +1148,25 @@ el.themeToggleBtn.addEventListener("click", () => {
   try { localStorage.setItem(THEME_KEY, next); } catch (_) { /* best effort only */ }
 });
 initTheme();
+
+/* ---------------- Real viewport height (iOS keyboard fix) ---------------- */
+// Self-contained: only ever writes the --vvh custom property, never reads
+// or touches any generation/engine state. Fixes a confirmed bug where the
+// persona-picker sheet (position:absolute; bottom:0 inside #app) stayed
+// visible under the input bar while the iOS software keyboard was open,
+// because 100dvh did not reliably shrink to match the actual visible
+// (visual) viewport in that state. window.visualViewport tracks the real
+// on-screen area directly and is the standard fix for this class of bug.
+function syncViewportHeight(){
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--vvh", h + "px");
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", syncViewportHeight);
+  window.visualViewport.addEventListener("scroll", syncViewportHeight);
+}
+window.addEventListener("resize", syncViewportHeight);
+syncViewportHeight();
 
 initModel();
 </script>
