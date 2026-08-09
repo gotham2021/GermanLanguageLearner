@@ -592,7 +592,15 @@ let history = [];         // authoritative transcript, no ephemeral reminders st
 let userTurnCount = 0;
 let modelReady = false;
 let busy = false;
-let activeRequestId = 0;  // guards against stale responses after persona switch / stop
+let activeRequestId = 0;  // bumped on persona switch to invalidate stale responses (NOT on stop — see stopBtn handler)
+let engineQueue = Promise.resolve(); // serializes access to `engine`; WebLLM can only run one generation at a time
+const stoppedRequestIds = new Set(); // requests the user explicitly stopped, vs. ones superseded by a switch
+
+function queueGeneration(fn){
+  const run = engineQueue.then(fn, fn);
+  engineQueue = run.then(() => {}, () => {}); // keep the chain alive even if this generation errored
+  return run;
+}
 
 const el = {
   gate: document.getElementById("gate"),
@@ -850,7 +858,13 @@ function hideSendShowStop(){
 
 el.stopBtn.addEventListener("click", async () => {
   if (!busy || !engine) return;
-  activeRequestId++; // invalidate the in-flight request
+  // Deliberately do NOT touch activeRequestId here. Bumping it would make
+  // runGeneration's own myRequestId===activeRequestId check fail, which
+  // skips the finalization block that resets `busy` and re-enables the
+  // Send button — i.e. it would permanently freeze the input bar. Stop
+  // just cancels the same request; activeRequestId only changes when a
+  // *newer* request (switch or send) needs to invalidate an older one.
+  stoppedRequestIds.add(activeRequestId);
   try { await engine.interruptGenerate(); } catch (_) { /* best effort */ }
 });
 
@@ -885,9 +899,20 @@ async function sendMessage(){
 
   const { wrap, bubble } = addMessage("persona", "", { register: currentPersona.register });
   bubble.classList.add("streaming-cursor");
+  const personaForThisTurn = currentPersona; // snapshot: if superseded, don't trust the (now different) live currentPersona
 
+  // Queued rather than fired directly: WebLLM's MLCEngine runs one
+  // generation at a time. Without this, switching persona mid-stream
+  // (which calls interruptGenerate but returns immediately) could let a
+  // brand-new generation start on the engine before the interrupted one
+  // has actually torn down, overlapping two calls on the same engine.
+  await queueGeneration(() => runGeneration(myRequestId, payload, wrap, bubble, text, personaForThisTurn));
+}
+
+async function runGeneration(myRequestId, payload, wrap, bubble, originalText, persona){
   let full = "";
   let streamErrored = false;
+  let recoveredByCatch = false; // true once the catch block has already cleaned up wrap/history — the success path must not touch them again
 
   try {
     const stream = await engine.chat.completions.create({
@@ -897,7 +922,7 @@ async function sendMessage(){
     });
 
     for await (const chunk of stream) {
-      if (myRequestId !== activeRequestId) { streamErrored = true; break; } // superseded — stop touching UI/state
+      if (myRequestId !== activeRequestId) { streamErrored = true; break; } // superseded by a switch — stop touching UI/state
       const delta = chunk.choices?.[0]?.delta?.content || "";
       if (delta) {
         full += delta;
@@ -917,15 +942,19 @@ async function sendMessage(){
       // and hand the text back so the person can retry without retyping.
       history.pop();
       userTurnCount--;
-      addMessage("error", "Die Antwort konnte nicht erzeugt werden. Verbindung/Modell prüfen und erneut versuchen.", { retry: text });
+      addMessage("error", "Die Antwort konnte nicht erzeugt werden. Verbindung/Modell prüfen und erneut versuchen.", { retry: originalText });
+      recoveredByCatch = true;
     }
   }
 
+  const wasStopped = stoppedRequestIds.delete(myRequestId);
+
   if (myRequestId === activeRequestId) {
     bubble.classList.remove("streaming-cursor");
-    if (!streamErrored) {
+    if (!recoveredByCatch && (!streamErrored || wasStopped)) {
       const { main, correction } = splitCorrection(full);
-      bubble.textContent = main || "…";
+      const shownText = main || (wasStopped ? "" : "…");
+      bubble.textContent = wasStopped ? (shownText + (shownText ? " " : "") + "⏸") : shownText;
       if (correction) {
         const note = document.createElement("div");
         note.className = "correction";
@@ -933,16 +962,28 @@ async function sendMessage(){
         note.querySelector("span:last-child").textContent = correction;
         wrap.appendChild(note);
       }
-      history.push({ role: "assistant", content: full });
-      el.liveRegion.textContent = `${currentPersona.name}: ${escapeForLive(main)}`;
+      if (full.trim()) {
+        // Keep history valid (alternating roles) even for a stopped reply —
+        // a truncated real answer is better than leaving the user's turn
+        // dangling with no assistant reply before the next message.
+        history.push({ role: "assistant", content: full });
+        el.liveRegion.textContent = `${persona.name}: ${escapeForLive(shownText)}`;
+      } else if (wasStopped) {
+        // Stopped before any token arrived — nothing to keep, roll back
+        // the user turn the same way the error path does.
+        wrap.remove();
+        history.pop();
+        userTurnCount--;
+      }
     }
     busy = false;
     el.sendBtn.disabled = false;
     hideStopShowSend();
     el.textInput.focus();
   }
-  // If superseded (myRequestId !== activeRequestId), deliberately do
-  // nothing further: the new persona/session already owns busy/UI state.
+  // If superseded by a persona switch (myRequestId !== activeRequestId),
+  // deliberately do nothing further: the new session already owns
+  // busy/UI state, and selectPersona() already cleared the chat DOM.
 }
 
 /* ---------------- Service worker + update flow ---------------- */
