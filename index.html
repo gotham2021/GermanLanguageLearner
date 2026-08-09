@@ -85,7 +85,22 @@
   .reg-du{ font-style: italic; }
 
   *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html,body{ height:100%; }
+  /*
+   * html/body locked to position:fixed — this is the actual fix for the
+   * "persona sheet appears under the input bar with the keyboard open"
+   * bug. Root cause (confirmed via screenshot): iOS Safari scrolls the
+   * whole document to bring a focused input into view above the
+   * keyboard, and does this even when body has overflow:hidden — that
+   * property only blocks user-initiated scroll, not iOS's own
+   * focus-scroll heuristic. The persona sheet was never actually stuck
+   * "open"; it was always sitting in its normal closed position
+   * (translated below the visible app), and the forced page-scroll
+   * dragged that off-screen content into view. Pinning html/body to
+   * position:fixed removes the scrollable document entirely, so there's
+   * nothing for iOS to scroll. #chat keeps its own independent
+   * overflow-y:auto and is unaffected.
+   */
+  html,body{ height:100%; position:fixed; width:100%; overscroll-behavior:none; }
   body{
     margin:0;
     background: var(--bg);
