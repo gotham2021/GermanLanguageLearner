@@ -571,19 +571,19 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 // WebLLM itself. If you swap MODEL_ID for a different model, update
 // MODEL_CONTEXT_TOKENS to match (check the model's mlc-chat-config.json).
 //
-// !!! TEMPORARY DIAGNOSTIC SWAP — DO NOT SHIP !!!
-// SmolLM2-135M-Instruct is ~360MB VRAM (vs Llama-3.2-1B's much larger
-// footprint) and has no meaningful German capability — replies will be
-// garbage. This exists solely to answer one question: does the exact same
-// "restarts on typing / keyboard open" crash still happen on iOS Safari
-// with a trivially small model? If yes, the root cause is NOT model size
-// and swapping models further is the wrong lever. If no, model size is
-// confirmed as the real constraint. Revert to a real model (Llama-3.2-1B
-// or bigger, per the quality-vs-memory decision still pending) once this
-// test has an answer. context_window_size for this model is 8192 per its
-// mlc-chat-config.json (verified 2026-08-09) — comfortably above our
-// MODEL_CONTEXT_TOKENS cap below, no change needed there.
-const MODEL_ID = "SmolLM2-135M-Instruct-q0f16-MLC";
+// Bisection test #2 on the iOS Safari memory ceiling. Confirmed so far,
+// on both test iPhones in real Safari (not Edge):
+//   - SmolLM2-135M-Instruct (~360MB VRAM)         -> survives
+//   - Llama-3.2-1B-Instruct-q4f16_1 (879MB VRAM)  -> crashes
+// gemma3-1b-it-q4f16_1 sits in between at 711MB VRAM (verified against
+// WebLLM's config.ts) — this test narrows the safe/crash boundary rather
+// than guessing again. German support: Gemma 3's model card claims
+// training on 140+ languages including German, but only at the
+// model-family level, not confirmed specifically for the 1B variant —
+// weaker guarantee than Llama-3.2-1B's explicit, size-specific German
+// claim. context_window_size is 8192 per its mlc-chat-config.json
+// (verified 2026-08-09), comfortably above MODEL_CONTEXT_TOKENS below.
+const MODEL_ID = "gemma3-1b-it-q4f16_1-MLC";
 const MODEL_CONTEXT_TOKENS = 4096;
 const RESPONSE_RESERVE_TOKENS = 512;   // headroom left for the model's own reply
 const REMINDER_EVERY_N_USER_TURNS = 6; // re-anchor persona/register periodically
