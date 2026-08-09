@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Anrede — Deutsch üben, im richtigen Ton</title>
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#2B3E5C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Anrede">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" href="./icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper: #EDEEE8;
+    --paper-raised: #F6F6F1;
+    --ink: #1B2024;
+    --ink-soft: #5B6169;
+    --line: #D5D6CC;
+
+    --formal: #2B3E5C;
+    --formal-soft: #DCE3ED;
+    --formal-tint: #EEF1F6;
+
+    --informal: #8A5A1E;
+    --informal-soft: #F1E3C9;
+    --informal-tint: #FBF4E7;
+
+    --correction: #8A6D00;
+    --danger: #7A2E2E;
+    --danger-soft: #F6E9E9;
+    --good: #2F6844;
+    --good-soft: #DEEBE2;
+
+    --radius: 14px;
+    --font-ui: "Archivo", system-ui, sans-serif;
+    --font-body: "Source Serif 4", Georgia, serif;
+    --font-mono: "IBM Plex Mono", monospace;
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  button{ font-family: var(--font-ui); border:none; background:none; cursor:pointer; color:inherit; }
+  button:disabled{ cursor:default; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+    outline: 2px solid var(--formal);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  #app{
+    display:flex;
+    flex-direction:column;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 560px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ---------- Toasts (update / level suggestion) ---------- */
+  #update-toast, #level-toast{
+    position:absolute;
+    top: max(10px, env(safe-area-inset-top));
+    left:12px; right:12px;
+    background: var(--ink);
+    color: var(--paper-raised);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display:flex; align-items:center; gap:10px;
+    font-family: var(--font-ui); font-size:13px;
+    z-index: 50;
+    transform: translateY(-120%);
+    transition: transform .25s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  #update-toast.show, #level-toast.show{ transform: translateY(0); }
+  #update-toast button{ font-weight:700; text-decoration: underline; flex-shrink:0; }
+  #level-toast{ flex-direction:column; align-items:stretch; gap:8px; }
+  #level-toast .level-toast-actions{ display:flex; gap:8px; justify-content:flex-end; }
+  #level-toast .level-toast-actions button{
+    font-weight:700; font-size:12px; padding:5px 12px; border-radius:14px;
+  }
+  #level-toast-yes{ background: var(--paper-raised); color: var(--ink); }
+  #level-toast-no{ color: var(--paper-raised); opacity:0.75; }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding: max(14px, env(safe-area-inset-top)) 12px 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper-raised);
+    flex-shrink:0;
+  }
+  .avatar{
+    width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-ui); font-weight:700; font-size:16px;
+    flex-shrink:0;
+  }
+  .avatar.sie{ background: var(--formal-soft); color: var(--formal); }
+  .avatar.du{ background: var(--informal-soft); color: var(--informal); }
+  .head-text{ flex:1; min-width:0; }
+  .head-name{ font-family: var(--font-ui); font-weight:700; font-size:15px; line-height:1.2; }
+  .head-role{ font-size:12px; color: var(--ink-soft); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .stamp{
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight:500;
+    letter-spacing: 0.12em;
+    padding: 4px 8px;
+    border-radius: 20px;
+    border: 1.5px solid currentColor;
+    white-space: nowrap;
+  }
+  .stamp.sie{ color: var(--formal); }
+  .stamp.du{ color: var(--informal); }
+  .icon-btn{
+    width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--ink-soft);
+    flex-shrink:0;
+  }
+  .icon-btn:hover{ background: var(--line); }
+  .icon-btn:disabled{ opacity: 0.35; }
+  #level-pill-btn{
+    font-family: var(--font-mono); font-size:11px; font-weight:700;
+    padding: 6px 10px; border-radius: 14px;
+    border: 1.5px solid var(--formal); color: var(--formal);
+    flex-shrink:0; white-space:nowrap;
+  }
+
+  /* ---------- Chat area ---------- */
+  #chat{
+    flex:1;
+    overflow-y:auto;
+    padding: 18px 16px 10px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .empty-state{
+    margin: auto 0;
+    text-align:center;
+    color: var(--ink-soft);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    padding: 0 20px;
+    line-height:1.6;
+  }
+  .empty-state .title{
+    font-size: 20px;
+    font-weight:700;
+    color: var(--ink);
+    display:block;
+    margin-bottom:8px;
+    font-family: var(--font-ui);
+  }
+
+  .msg{ display:flex; flex-direction:column; max-width: 86%; }
+  .msg.user{ align-self:flex-end; align-items:flex-end; }
+  .msg.persona{ align-self:flex-start; align-items:flex-start; }
+
+  .bubble{
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-size: 16px;
+    line-height:1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 1.45em;
+  }
+  .msg.user .bubble{
+    background: var(--formal);
+    color: var(--paper-raised);
+    border-bottom-right-radius: 4px;
+  }
+  .msg.persona .bubble{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.persona.sie .bubble{ border-left: 3px solid var(--formal); }
+  .msg.persona.du .bubble{ border-left: 3px solid var(--informal); }
+  .msg.error .bubble{
+    background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger);
+  }
+
+  .correction{
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--correction);
+    display:flex;
+    gap:6px;
+    align-items:flex-start;
+    max-width: 100%;
+  }
+  .correction .mark{ flex-shrink:0; }
+  .correction .cat{ font-weight:700; text-transform:uppercase; letter-spacing:0.04em; flex-shrink:0; }
+
+  .goal-note{
+    align-self:center;
+    font-family: var(--font-ui); font-weight:700; font-size:12px;
+    color: var(--good);
+    background: var(--good-soft);
+    border: 1px solid var(--good);
+    border-radius: 20px;
+    padding: 6px 14px;
+    margin: 4px 0;
+    text-align:center;
+  }
+  .scenario-note{
+    align-self:center;
+    font-family: var(--font-ui); font-size:12px;
+    color: var(--ink-soft);
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin: 4px 0;
+    text-align:center;
+    max-width: 90%;
+  }
+
+  .streaming-cursor::after{
+    content: "▍";
+    display:inline-block;
+    animation: blink 1s step-start infinite;
+    color: var(--ink-soft);
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  .retry-row{
+    margin-top:6px;
+    display:flex;
+    gap:8px;
+  }
+  .retry-btn{
+    font-family: var(--font-ui); font-weight:600; font-size:12px;
+    padding: 5px 12px; border-radius:14px;
+    border: 1.5px solid var(--danger); color: var(--danger);
+  }
+
+  /* ---------- Input bar ---------- */
+  #input-bar{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    padding: 10px 16px max(10px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--paper-raised);
+    flex-shrink:0;
+  }
+  #text-input{
+    flex:1;
+    font-family: var(--font-body);
+    font-size: 16px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    resize:none;
+    max-height: 120px;
+    background: var(--paper);
+    color: var(--ink);
+    line-height:1.4;
+  }
+  #send-btn, #stop-btn{
+    width:40px; height:40px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: opacity .15s;
+  }
+  #send-btn{ background: var(--formal); color: var(--paper-raised); }
+  #send-btn:disabled{ opacity:0.35; }
+  #stop-btn{ background: var(--danger); color: var(--paper-raised); display:none; }
+
+  /* ---------- Generic bottom sheet ---------- */
+  .backdrop{
+    position:absolute; inset:0;
+    background: rgba(27,32,36,0.4);
+    opacity:0; pointer-events:none;
+    transition: opacity .2s ease;
+    z-index: 20;
+  }
+  .backdrop.open{ opacity:1; pointer-events:auto; }
+
+  .sheet{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    background: var(--paper-raised);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+    transform: translateY(100%);
+    transition: transform .25s ease;
+    z-index: 21;
+    max-height: 86vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .sheet.open{ transform: translateY(0); }
+
+  .sheet-handle{
+    width:36px; height:4px; background: var(--line); border-radius:2px;
+    margin: 10px auto 6px;
+    flex-shrink:0;
+  }
+  .sheet-title{
+    font-family: var(--font-ui); font-weight:700; font-size:16px;
+    padding: 4px 20px 10px;
+    flex-shrink:0;
+    border-bottom: 1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .sheet-title small{
+    display:block; font-weight:500; font-size:12px; color: var(--ink-soft); margin-top:3px;
+  }
+  .sheet-title .close-x{ color: var(--ink-soft); font-size:20px; line-height:1; flex-shrink:0; padding:4px; }
+
+  .persona-list{
+    overflow-y:auto;
+    padding: 8px 12px calc(20px + env(safe-area-inset-bottom));
+  }
+  .section-label{
+    font-family: var(--font-ui); font-weight:700; font-size:11px;
+    letter-spacing: 0.06em; text-transform:uppercase;
+    color: var(--ink-soft);
+    padding: 14px 10px 6px;
+  }
+  .section-label:first-child{ padding-top:8px; }
+
+  .persona-card{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    text-align:left;
+    padding: 12px 10px;
+    border-radius: 12px;
+  }
+  .persona-card:hover{ background: var(--paper); }
+  .persona-card.active{ background: var(--formal-tint); }
+  .persona-card .info{ flex:1; min-width:0; }
+  .persona-card .name{ font-family: var(--font-ui); font-weight:700; font-size:14px; }
+  .persona-card .role{ font-size:12px; color: var(--ink-soft); margin-top:1px; }
+  .persona-card .goal{ font-size:11px; color: var(--formal); margin-top:2px; font-family: var(--font-ui); }
+  .persona-card .level-tag{
+    font-family: var(--font-mono); font-size:10px; color: var(--ink-soft);
+    border: 1px solid var(--line); border-radius: 10px; padding: 2px 6px;
+    flex-shrink:0;
+  }
+  .persona-card .del-btn{
+    color: var(--danger); flex-shrink:0; padding:6px; border-radius:8px;
+  }
+  .persona-card .del-btn:hover{ background: var(--danger-soft); }
+  .add-scenario-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding: 14px 10px; margin-top:4px;
+    border: 1.5px dashed var(--line); border-radius: 12px;
+    font-family: var(--font-ui); font-weight:600; font-size:13px;
+    color: var(--formal);
+  }
+  .add-scenario-btn:hover{ background: var(--formal-tint); }
+
+  /* ---------- Level sheet ---------- */
+  .level-card{
+    display:flex; flex-direction:column; gap:3px;
+    width:100%; text-align:left;
+    padding: 12px 14px; border-radius: 12px;
+    border: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .level-card:hover{ background: var(--paper); }
+  .level-card.active{ background: var(--formal-tint); border-color: var(--formal); }
+  .level-card .level-label{ font-family: var(--font-ui); font-weight:700; font-size:14px; }
+  .level-card .level-desc{ font-size:12px; color: var(--ink-soft); line-height:1.4; }
+
+  /* ---------- Scenario builder / forms ---------- */
+  .form-wrap{ padding: 14px 16px calc(24px + env(safe-area-inset-bottom)); overflow-y:auto; }
+  .form-field{ margin-bottom: 14px; }
+  .form-field label{
+    display:block; font-family: var(--font-ui); font-weight:600; font-size:12px;
+    color: var(--ink-soft); margin-bottom: 5px;
+  }
+  .form-field input[type="text"], .form-field textarea, .form-field select{
+    width:100%; font-family: var(--font-body); font-size:15px;
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--paper); color: var(--ink);
+  }
+  .form-field textarea{ resize:vertical; min-height: 56px; }
+  .form-row{ display:flex; gap:10px; }
+  .form-row .form-field{ flex:1; }
+  .segmented{ display:flex; border: 1px solid var(--line); border-radius: 10px; overflow:hidden; }
+  .segmented button{
+    flex:1; padding: 9px 0; font-family: var(--font-ui); font-weight:600; font-size:13px;
+    color: var(--ink-soft);
+  }
+  .segmented button.active{ background: var(--formal); color: var(--paper-raised); }
+  .form-actions{ display:flex; gap:10px; margin-top: 6px; }
+  .btn-primary, .btn-secondary{
+    flex:1; padding: 11px 0; border-radius: 14px; text-align:center;
+    font-family: var(--font-ui); font-weight:700; font-size:14px;
+  }
+  .btn-primary{ background: var(--formal); color: var(--paper-raised); }
+  .btn-secondary{ border: 1px solid var(--line); color: var(--ink-soft); }
+
+  /* ---------- Progress sheet ---------- */
+  .progress-wrap{ padding: 14px 16px calc(24px + env(safe-area-inset-bottom)); overflow-y:auto; }
+  .stat-block{ margin-bottom: 18px; }
+  .stat-block .stat-title{ font-family: var(--font-ui); font-weight:700; font-size:13px; margin-bottom:8px; }
+  .stat-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .stat-row .stat-name{ font-family: var(--font-ui); font-size:12px; color: var(--ink-soft); width:78px; flex-shrink:0; }
+  .stat-track{ flex:1; height:8px; background: var(--line); border-radius:4px; overflow:hidden; }
+  .stat-fill{ height:100%; border-radius:4px; }
+  .stat-fill.anrede{ background: var(--formal); }
+  .stat-fill.grammatik{ background: var(--correction); }
+  .stat-fill.wortschatz{ background: var(--informal); }
+  .stat-count{ font-family: var(--font-mono); font-size:11px; color: var(--ink-soft); width:24px; text-align:right; flex-shrink:0; }
+  .stat-empty{ font-size:13px; color: var(--ink-soft); font-family: var(--font-ui); }
+  .stat-meta{ font-size:12px; color: var(--ink-soft); margin-top:4px; }
+
+  /* ---------- Confirm modal ---------- */
+  #confirm-backdrop{
+    position:absolute; inset:0;
+    background: rgba(27,32,36,0.4);
+    opacity:0; pointer-events:none;
+    transition: opacity .15s ease;
+    z-index: 40;
+    display:flex; align-items:center; justify-content:center;
+    padding: 24px;
+  }
+  #confirm-backdrop.open{ opacity:1; pointer-events:auto; }
+  #confirm-dialog{
+    background: var(--paper-raised);
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 340px;
+    width:100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  }
+  #confirm-dialog p{
+    font-family: var(--font-ui); font-size:14px; line-height:1.5; margin: 0 0 16px;
+    color: var(--ink);
+  }
+  .confirm-actions{ display:flex; gap:10px; justify-content:flex-end; }
+  .confirm-actions button{
+    font-family: var(--font-ui); font-weight:600; font-size:13px;
+    padding: 8px 14px; border-radius: 14px;
+  }
+  #confirm-cancel{ color: var(--ink-soft); }
+  #confirm-ok{ background: var(--danger); color:#fff; }
+
+  /* ---------- Loading / gate overlay ---------- */
+  #gate{
+    position:absolute; inset:0;
+    background: var(--paper);
+    z-index: 30;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 32px;
+    text-align:center;
+    gap:16px;
+  }
+  #gate.hidden{ display:none; }
+  #gate .stamp-mark{
+    width:72px; height:72px;
+    border-radius:50%;
+    border: 2px solid var(--formal);
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-ui); font-weight:700; font-size:22px;
+    color: var(--formal);
+  }
+  #gate h1{
+    font-family: var(--font-ui); font-size:19px; margin:0;
+  }
+  #gate p{
+    font-size:14px; color: var(--ink-soft); line-height:1.6; max-width: 380px; margin:0;
+  }
+  #gate .gate-progress{
+    width: 240px;
+  }
+  #gate .gate-status{
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+  }
+  #gate .error-box{
+    background: var(--danger-soft); border:1px solid var(--danger); color: var(--danger);
+    border-radius: 10px; padding: 14px 16px; font-size:13px; text-align:left;
+    font-family: var(--font-ui); max-width: 380px; line-height:1.5;
+  }
+  #retry-btn{
+    font-family: var(--font-ui); font-weight:600; font-size:13px;
+    padding: 8px 16px; border-radius:20px;
+    border: 1.5px solid var(--formal); color: var(--formal);
+    display:none;
+  }
+  #progress-track{ height:4px; background: var(--line); border-radius:2px; overflow:hidden; }
+  #progress-fill{ height:100%; width:0%; background: var(--formal); transition: width .2s ease; }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="update-toast" role="status">
+    <span id="update-toast-text">Neue Version verfügbar.</span>
+    <button id="update-reload-btn" type="button">Neu laden</button>
+  </div>
+
+  <div id="level-toast" role="status">
+    <span id="level-toast-text"></span>
+    <div class="level-toast-actions">
+      <button id="level-toast-no" type="button">Später</button>
+      <button id="level-toast-yes" type="button">Ja, wechseln</button>
+    </div>
+  </div>
+
+  <!-- Gate: WebGPU check + model loading -->
+  <div id="gate">
+    <div class="stamp-mark">DE</div>
+    <h1 id="gate-title">Anrede wird vorbereitet</h1>
+    <p id="gate-text">Das Sprachmodell wird einmalig heruntergeladen und läuft danach vollständig auf diesem Gerät. Keine Daten verlassen dein Handy.</p>
+    <div class="gate-progress" id="progress-track">
+      <div id="progress-fill"></div>
+    </div>
+    <div class="gate-status" id="gate-status">Prüfe Gerät …</div>
+    <div class="error-box" id="error-box" style="display:none;"></div>
+    <button id="retry-btn" type="button">Erneut versuchen</button>
+  </div>
+
+  <header>
+    <button class="icon-btn" id="menu-btn" type="button" aria-label="Persona wechseln" aria-haspopup="dialog">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="avatar" id="head-avatar">?</div>
+    <div class="head-text">
+      <div class="head-name" id="head-name">Persona wählen</div>
+      <div class="head-role" id="head-role">Tippe auf das Menü, um zu starten</div>
+    </div>
+    <div class="stamp" id="head-stamp" style="display:none;"></div>
+    <button id="level-pill-btn" type="button" aria-label="Level ändern" aria-haspopup="dialog">B1</button>
+    <button class="icon-btn" id="progress-btn" type="button" aria-label="Fortschritt anzeigen" aria-haspopup="dialog">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 20V13M11 20V4M18 20V9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button class="icon-btn" id="lang-toggle-btn" type="button" aria-label="Switch UI language">EN</button>
+  </header>
+
+  <main id="chat">
+    <div class="empty-state" id="empty-state">
+      <span class="title" id="empty-title">Willkommen</span>
+      <span id="empty-body">Wähle links oben eine Person oder ein Szenario aus. Jede Person spricht dich entweder mit „Sie" oder „du" an — genau so, wie es im echten Leben zu ihrer Rolle passt.</span>
+    </div>
+  </main>
+
+  <div id="live-region" class="visually-hidden" aria-live="polite"></div>
+
+  <form id="input-bar">
+    <textarea id="text-input" rows="1" maxlength="600" placeholder="Nachricht schreiben …" disabled aria-label="Nachricht"></textarea>
+    <button type="submit" id="send-btn" disabled aria-label="Senden">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" id="stop-btn" aria-label="Antwort abbrechen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+    </button>
+  </form>
+
+  <!-- Persona / scenario sheet -->
+  <div id="sheet-backdrop" class="backdrop"></div>
+  <div id="persona-sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Persona oder Szenario wählen">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="persona-sheet-title">Mit wem möchtest du sprechen?<small id="persona-sheet-hint">Das Gespräch startet bei jedem Wechsel neu.</small></span>
+    </div>
+    <div class="persona-list" id="persona-list"></div>
+  </div>
+
+  <!-- Level sheet -->
+  <div id="level-sheet-backdrop" class="backdrop"></div>
+  <div id="level-sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Sprachniveau wählen">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="level-sheet-title">Wie gut sprichst du schon Deutsch?<small id="level-sheet-hint">Das lässt sich jederzeit hier ändern. Die App schlägt dir später selbst vor, wenn ein höheres Niveau passen könnte.</small></span>
+    </div>
+    <div class="persona-list" id="level-list"></div>
+  </div>
+
+  <!-- Custom scenario builder sheet -->
+  <div id="builder-sheet-backdrop" class="backdrop"></div>
+  <div id="builder-sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Eigenes Szenario erstellen">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="builder-title">Eigenes Szenario</span>
+      <button type="button" class="close-x" id="builder-close">&times;</button>
+    </div>
+    <form class="form-wrap" id="builder-form">
+      <div class="form-field">
+        <label for="b-name" id="b-name-label">Name der Person</label>
+        <input type="text" id="b-name" required maxlength="40" placeholder="z. B. Frau Weber">
+      </div>
+      <div class="form-field">
+        <label for="b-role" id="b-role-label">Rolle (kurz)</label>
+        <input type="text" id="b-role" required maxlength="60" placeholder="z. B. Vermieterin">
+      </div>
+      <div class="form-field">
+        <label for="b-bio" id="b-bio-label">Wer ist diese Person? Wie verhält sie sich?</label>
+        <textarea id="b-bio" required maxlength="300" placeholder="z. B. eine Vermieterin, die eine Wohnung zeigt und Fragen zur Miete beantwortet."></textarea>
+      </div>
+      <div class="form-field">
+        <label for="b-setting" id="b-setting-label">Wo findet das Gespräch statt?</label>
+        <input type="text" id="b-setting" required maxlength="120" placeholder="z. B. bei einer Wohnungsbesichtigung">
+      </div>
+      <div class="form-field">
+        <label for="b-goal" id="b-goal-label">Was möchtest du am Ende erreicht haben?</label>
+        <input type="text" id="b-goal" required maxlength="140" placeholder="z. B. die wichtigsten Fragen zur Wohnung geklärt haben">
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label id="b-register-label">Register</label>
+          <div class="segmented" id="b-register">
+            <button type="button" data-value="sie" class="active">Sie</button>
+            <button type="button" data-value="du">du</button>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="b-level" id="b-level-label">Level</label>
+          <select id="b-level"></select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" id="builder-cancel">Abbrechen</button>
+        <button type="submit" class="btn-primary" id="builder-save">Speichern</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Progress / mistake log sheet -->
+  <div id="progress-sheet-backdrop" class="backdrop"></div>
+  <div id="progress-sheet" class="sheet" role="dialog" aria-modal="true" aria-label="Fortschritt">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      <span id="progress-sheet-title">Dein Fortschritt</span>
+      <button type="button" class="close-x" id="progress-close">&times;</button>
+    </div>
+    <div class="progress-wrap" id="progress-content"></div>
+  </div>
+
+  <div id="confirm-backdrop">
+    <div id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
+      <p id="confirm-text"></p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" type="button">Abbrechen</button>
+        <button id="confirm-ok" type="button">Wechseln</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+// NOTE: WebLLM is loaded via a dynamic import() inside initModel(), not a
+// static top-level import. A static import that fails to resolve (CDN
+// unreachable, blocked by a firewall/ad-blocker, offline on first visit)
+// would abort evaluation of this entire module with no chance to catch
+// the error — no listeners would bind and initModel() would never run,
+// leaving the user stuck on the loading screen with no explanation. The
+// dynamic import happens inside initModel()'s own try/catch instead, so
+// that failure surfaces through the normal showGateError() path.
+let webllm = null;
+
+/* ================================================================
+   Model config
+   ================================================================ */
+// NOTE: context window is a property of the specific model build, not of
+// WebLLM itself. If you swap MODEL_ID for a different model, update
+// MODEL_CONTEXT_TOKENS to match (check the model's mlc-chat-config.json).
+// Switched from Qwen2.5-1.5B to Llama-3.2-1B-Instruct: smaller (1.2B vs
+// 1.5B params, less memory pressure on iOS Safari's tight tab memory
+// ceiling) while officially supporting German (Meta's model card lists
+// it as one of eight supported languages; Qwen2.5 has no equivalent
+// documented claim). Real model's context window is 128K per its
+// mlc-chat-config.json, but capped far below that here deliberately --
+// KV-cache memory scales with context length, and iOS Safari is the
+// tightest memory budget this app runs on.
+const MODEL_ID = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+const MODEL_CONTEXT_TOKENS = 4096;
+const RESPONSE_RESERVE_TOKENS = 512;   // headroom left for the model's own reply
+const REMINDER_EVERY_N_USER_TURNS = 6; // re-anchor persona/register/level periodically
+const SCENARIO_MAX_TURNS = 14;         // soft fallback if a scenario never signals completion
+
+/* ================================================================
+   CEFR levels
+   ----------------------------------------------------------------
+   This is an engineering heuristic loosely inspired by the CEFR bands,
+   not an implementation of the official framework — CEFR describes
+   competencies, not a vocabulary list or grammar checklist. The
+   selfCheck text is paraphrased in the spirit of the kind of public
+   self-assessment grids language programs publish (e.g. Europass),
+   not a quotation of any specific document.
+   ================================================================ */
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+// modelLabel/promptFragment/reminderFragment are sent to the model and
+// stay German always -- the model is a German-speaking roleplay
+// character regardless of what language the app's own UI is in.
+// label/selfCheck are UI-facing and localized per uiLang.
+const LEVEL_PROFILES = {
+  A1: {
+    modelLabel: "A1 — Anfänger",
+    label: { en: "A1 — Beginner", de: "A1 — Anfänger" },
+    selfCheck: {
+      en: "I can understand single words and very simple sentences, e.g. say my name or ask for directions.",
+      de: "Ich kann einzelne Wörter und ganz einfache Sätze verstehen, z. B. meinen Namen sagen oder nach dem Weg fragen."
+    },
+    promptFragment: "Sprich in sehr kurzen, einfachen Hauptsätzen (max. 6-8 Wörter). Nutze nur das Präsens. Nur alltäglicher, konkreter Wortschatz. Keine Nebensätze, keine Redewendungen. Korrigiere praktisch jeden Fehler, aber sehr freundlich.",
+    reminderFragment: "sehr einfaches, kurzes Deutsch (A1)"
+  },
+  A2: {
+    modelLabel: "A2 — Grundlagen",
+    label: { en: "A2 — Elementary", de: "A2 — Grundlagen" },
+    selfCheck: {
+      en: "I can handle simple everyday conversations, e.g. shopping or asking the time.",
+      de: "Ich kann einfache Gespräche über Alltägliches führen, z. B. einkaufen oder nach der Uhrzeit fragen."
+    },
+    promptFragment: "Sprich in kurzen Sätzen, gelegentlich mit \"und\"/\"aber\"/\"oder\" verbunden. Präsens und einfaches Perfekt sind erlaubt. Konkreter Alltagswortschatz. Korrigiere die meisten Fehler freundlich.",
+    reminderFragment: "einfaches Alltagsdeutsch (A2)"
+  },
+  B1: {
+    modelLabel: "B1 — Fortgeschritten I",
+    label: { en: "B1 — Intermediate", de: "B1 — Fortgeschritten I" },
+    selfCheck: {
+      en: "I can talk about familiar topics, give simple reasons for my opinion, and handle most everyday situations.",
+      de: "Ich kann über bekannte Themen sprechen, meine Meinung einfach begründen und die meisten Alltagssituationen bewältigen."
+    },
+    promptFragment: "Nutze auch Nebensätze mit \"weil\", \"dass\", \"wenn\". Präteritum und einfaches Konjunktiv II (\"würde\") sind erlaubt. Etwas breiterer Wortschatz zu Alltagsthemen. Korrigiere klare Fehler, ignoriere kleinere Stilfragen.",
+    reminderFragment: "mittleres Deutsch mit einfachen Nebensätzen (B1)"
+  },
+  B2: {
+    modelLabel: "B2 — Fortgeschritten II",
+    label: { en: "B2 — Upper Intermediate", de: "B2 — Fortgeschritten II" },
+    selfCheck: {
+      en: "I can express myself clearly in most situations, including somewhat complex or abstract topics.",
+      de: "Ich kann mich in den meisten Situationen klar ausdrücken, auch bei etwas komplexeren oder abstrakten Themen."
+    },
+    promptFragment: "Nutze variierte Nebensätze, Passiv und Konjunktiv II. Wortschatz darf auch abstrakte Themen und leichte Redewendungen enthalten. Korrigiere Grammatik- und Registerfehler, reine Stilfragen meist nicht.",
+    reminderFragment: "gehobeneres Deutsch mit Passiv und Konjunktiv (B2)"
+  },
+  C1: {
+    modelLabel: "C1 — Kompetent",
+    label: { en: "C1 — Advanced", de: "C1 — Kompetent" },
+    selfCheck: {
+      en: "I can express myself spontaneously and fluently, even on complex topics, almost without searching for words.",
+      de: "Ich kann mich spontan und flüssig ausdrücken, auch zu komplexen Themen, fast ohne nach Worten zu suchen."
+    },
+    promptFragment: "Sprich natürlich und nuanciert, mit Redewendungen und Konjunktiv I in indirekter Rede, wo passend. Korrigiere nur echte Fehler, keine reinen Stilvarianten.",
+    reminderFragment: "natürliches, nuanciertes Deutsch (C1)"
+  },
+  C2: {
+    modelLabel: "C2 — Nahezu muttersprachlich",
+    label: { en: "C2 — Mastery", de: "C2 — Nahezu muttersprachlich" },
+    selfCheck: {
+      en: "I can hold practically any conversation with ease, including fine shades of meaning and irony.",
+      de: "Ich kann praktisch jedes Gespräch mühelos führen, auch mit feinen Bedeutungsnuancen und Ironie."
+    },
+    promptFragment: "Sprich wie mit einem Muttersprachler, inklusive Ironie, Redewendungen und feinen Registerunterschieden. Korrigiere nur, wenn wirklich etwas falsch ist.",
+    reminderFragment: "muttersprachliches Deutsch mit Nuancen (C2)"
+  }
+};
+
+/* ================================================================
+   UI strings (interface chrome only — English by default)
+   ----------------------------------------------------------------
+   The app is a German-learning tool, so an all-German interface is a
+   real barrier for the exact users it's for: an A1 beginner cannot
+   read "Wie gut sprichst du schon Deutsch?" any more easily than they
+   can hold the conversation itself. Interface chrome (buttons, sheet
+   titles, gate messages, level descriptions, correction category
+   labels) is localized; the actual German being practiced -- persona
+   dialogue, system prompts, scenario goals/bios, model-generated
+   correction text -- always stays German, since that's the content
+   being taught, not something to translate away. Default is English;
+   switch anytime via the EN/DE pill in the header.
+   ================================================================ */
+let uiLang = "en";
+
+const STRINGS = {
+  en: {
+    appName: "Anrede",
+    gateTitle: "Getting Anrede ready",
+    gateText: "The language model downloads once and then runs entirely on this device. No data ever leaves your phone.",
+    gateCheckingDevice: "Checking device …",
+    gateLoadingModule: "Loading WebLLM module …",
+    gateLoadingModel: "Loading language model (once, then offline) …",
+    gateStalled: "This is taking longer than usual. Check your connection — you can reload this screen any time.",
+    gateErrorTitle: "Something went wrong",
+    gateNoWebGPU: "This device doesn't support WebGPU.",
+    gateNoWebGPUDetail: "Anrede needs WebGPU to run the language model locally. On iPhone: iOS 26 or newer, opened in Safari. On desktop: a recent Chrome, Edge, or Safari.",
+    gateModelLoadFailedTitle: "The model could not be loaded.",
+    gateModelLoadFailedDetail: "Check your internet connection and try again.",
+    retry: "Try again",
+    menuAria: "Change persona",
+    levelAria: "Change level",
+    progressAria: "Show progress",
+    headNamePlaceholder: "Choose a persona",
+    headRolePlaceholder: "Tap the menu to get started",
+    emptyTitle: "Welcome",
+    emptyBody: "Choose a person or scenario from the menu top-left. Each person addresses you with either „Sie“ (formal) or „du“ (informal) — exactly as it would in real life for their role.",
+    inputPlaceholder: "Write a message …",
+    inputAria: "Message",
+    sendAria: "Send",
+    stopAria: "Stop response",
+    updateAvailable: "New version available.",
+    reload: "Reload",
+    personaSheetTitle: "Who do you want to talk to?",
+    personaSheetHint: "The conversation restarts every time you switch.",
+    sectionScenarios: "Scenarios",
+    sectionCustomScenarios: "Your scenarios",
+    sectionFreeChat: "Free conversation",
+    addScenario: "Create your own scenario",
+    delete: "Delete",
+    goalLabel: "Goal",
+    switchPersonaConfirm: (name) => `Switch to ${name}? The current conversation will be lost.`,
+    deleteScenarioConfirm: (name) => `Delete "${name}"?`,
+    levelSheetTitle: "How good is your German already?",
+    levelSheetHint: "Change this any time here. The app will suggest a higher level itself later once it looks like a good fit.",
+    levelChangeConfirm: (label) => `Change level to ${label}? The current conversation will restart.`,
+    levelNotChosen: "Not chosen yet",
+    levelPromoteSuggestion: (label) => `You seem ready for ${label} — want to try it?`,
+    levelDemoteSuggestion: (curLabel, targetLabel) => `${curLabel} seems tough right now. Go back to ${targetLabel}?`,
+    later: "Later",
+    yesSwitch: "Yes, switch",
+    builderTitle: "Custom scenario",
+    builderName: "Person's name",
+    builderNamePh: "e.g. Ms. Weber",
+    builderRole: "Role (short)",
+    builderRolePh: "e.g. landlady",
+    builderBio: "Who is this person? How do they behave?",
+    builderBioPh: "e.g. a landlady who is showing an apartment and answers questions about rent.",
+    builderSetting: "Where does the conversation take place?",
+    builderSettingPh: "e.g. at an apartment viewing",
+    builderGoal: "What do you want to have achieved by the end?",
+    builderGoalPh: "e.g. have the key questions about the apartment answered",
+    builderRegister: "Register",
+    builderLevel: "Level",
+    cancel: "Cancel",
+    save: "Save",
+    progressTitle: "Your progress",
+    currentLevel: "Current level",
+    messagesLast30: (n) => `${n} messages in the last 30 days`,
+    correctionsByCategory: "Corrections by category (30 days)",
+    noDataYet: "No data yet — start a conversation.",
+    catAnrede: "Register",
+    catGrammatik: "Grammar",
+    catWortschatz: "Vocabulary",
+    changeLevelManually: "Change level manually",
+    goalReached: "✓ Goal reached!",
+    scenarioLimitNote: "Not quite there yet — you can keep talking or pick a new scenario.",
+    errorReplyFailed: "Couldn't generate a reply. Check your connection/model and try again.",
+    retrySend: "Resend",
+  },
+  de: {
+    appName: "Anrede",
+    gateTitle: "Anrede wird vorbereitet",
+    gateText: "Das Sprachmodell wird einmalig heruntergeladen und läuft danach vollständig auf diesem Gerät. Keine Daten verlassen dein Handy.",
+    gateCheckingDevice: "Prüfe Gerät …",
+    gateLoadingModule: "Lade WebLLM-Modul …",
+    gateLoadingModel: "Lade Sprachmodell (einmalig, danach offline) …",
+    gateStalled: "Das dauert länger als gewöhnlich. Verbindung prüfen — die Ladeseite kann jederzeit neu geladen werden.",
+    gateErrorTitle: "Es gab ein Problem",
+    gateNoWebGPU: "Dieses Gerät unterstützt WebGPU nicht.",
+    gateNoWebGPUDetail: "Anrede braucht WebGPU, um das Sprachmodell lokal auszuführen. Auf dem iPhone heißt das: iOS 26 oder neuer, geöffnet in Safari. Auf dem Desktop: ein aktueller Chrome, Edge oder Safari.",
+    gateModelLoadFailedTitle: "Das Modell konnte nicht geladen werden.",
+    gateModelLoadFailedDetail: "Internetverbindung prüfen und erneut versuchen.",
+    retry: "Erneut versuchen",
+    menuAria: "Persona wechseln",
+    levelAria: "Level ändern",
+    progressAria: "Fortschritt anzeigen",
+    headNamePlaceholder: "Persona wählen",
+    headRolePlaceholder: "Tippe auf das Menü, um zu starten",
+    emptyTitle: "Willkommen",
+    emptyBody: "Wähle links oben eine Person oder ein Szenario aus. Jede Person spricht dich entweder mit „Sie“ oder „du“ an — genau so, wie es im echten Leben zu ihrer Rolle passt.",
+    inputPlaceholder: "Nachricht schreiben …",
+    inputAria: "Nachricht",
+    sendAria: "Senden",
+    stopAria: "Antwort abbrechen",
+    updateAvailable: "Neue Version verfügbar.",
+    reload: "Neu laden",
+    personaSheetTitle: "Mit wem möchtest du sprechen?",
+    personaSheetHint: "Das Gespräch startet bei jedem Wechsel neu.",
+    sectionScenarios: "Szenarien",
+    sectionCustomScenarios: "Eigene Szenarien",
+    sectionFreeChat: "Freies Gespräch",
+    addScenario: "Eigenes Szenario erstellen",
+    delete: "Löschen",
+    goalLabel: "Ziel",
+    switchPersonaConfirm: (name) => `Zu ${name} wechseln? Das aktuelle Gespräch geht dabei verloren.`,
+    deleteScenarioConfirm: (name) => `"${name}" löschen?`,
+    levelSheetTitle: "Wie gut sprichst du schon Deutsch?",
+    levelSheetHint: "Das lässt sich jederzeit hier ändern. Die App schlägt dir später selbst vor, wenn ein höheres Niveau passen könnte.",
+    levelChangeConfirm: (label) => `Level auf ${label} ändern? Das aktuelle Gespräch beginnt dabei neu.`,
+    levelNotChosen: "Noch nicht gewählt",
+    levelPromoteSuggestion: (label) => `Du scheinst bereit für ${label} zu sein — versuchen?`,
+    levelDemoteSuggestion: (curLabel, targetLabel) => `${curLabel} scheint gerade schwer zu sein. Zurück zu ${targetLabel}?`,
+    later: "Später",
+    yesSwitch: "Ja, wechseln",
+    builderTitle: "Eigenes Szenario",
+    builderName: "Name der Person",
+    builderNamePh: "z. B. Frau Weber",
+    builderRole: "Rolle (kurz)",
+    builderRolePh: "z. B. Vermieterin",
+    builderBio: "Wer ist diese Person? Wie verhält sie sich?",
+    builderBioPh: "z. B. eine Vermieterin, die eine Wohnung zeigt und Fragen zur Miete beantwortet.",
+    builderSetting: "Wo findet das Gespräch statt?",
+    builderSettingPh: "z. B. bei einer Wohnungsbesichtigung",
+    builderGoal: "Was möchtest du am Ende erreicht haben?",
+    builderGoalPh: "z. B. die wichtigsten Fragen zur Wohnung geklärt haben",
+    builderRegister: "Register",
+    builderLevel: "Level",
+    cancel: "Abbrechen",
+    save: "Speichern",
+    progressTitle: "Dein Fortschritt",
+    currentLevel: "Aktuelles Level",
+    messagesLast30: (n) => `${n} Nachrichten in den letzten 30 Tagen`,
+    correctionsByCategory: "Korrekturen nach Kategorie (30 Tage)",
+    noDataYet: "Noch keine Daten — fang ein Gespräch an.",
+    catAnrede: "Anrede",
+    catGrammatik: "Grammatik",
+    catWortschatz: "Wortschatz",
+    changeLevelManually: "Level manuell ändern",
+    goalReached: "✓ Ziel erreicht!",
+    scenarioLimitNote: "Noch nicht ganz geschafft — du kannst weiterreden oder ein neues Szenario wählen.",
+    errorReplyFailed: "Die Antwort konnte nicht erzeugt werden. Verbindung/Modell prüfen und erneut versuchen.",
+    retrySend: "Erneut senden",
+  }
+};
+
+function t(key, ...args){
+  const entry = (STRINGS[uiLang] || STRINGS.en)[key];
+  return typeof entry === "function" ? entry(...args) : entry;
+}
+
+/* ================================================================
+   Personas (open conversation) + curated scenarios (goal-directed)
+   ----------------------------------------------------------------
+   Register choice for scenarios: most are transactional/professional
+   encounters with a stranger, where "Sie" is the sociolinguistically
+   correct default in Germany — that's intentional, not a
+   simplification, since drilling the common real-world case matters
+   more here than variety.
+   ================================================================ */
+const PERSONAS = [
+  {
+    id: "hoffmann", kind: "open",
+    name: "Frau Hoffmann", role: "Nachbarin im Treppenhaus", roleEn: "Neighbor in the stairwell", register: "sie", avatar: "H",
+    bio: "eine ältere Nachbarin, die im dritten Stock wohnt. Ihr grüßt euch im Treppenhaus und redet manchmal kurz über Alltägliches (Wetter, Müllabfuhr, Päckchen)."
+  },
+  {
+    id: "bauer", kind: "open",
+    name: "Herr Bauer", role: "Sachbearbeiter, Bürgeramt", roleEn: "Clerk, citizens' registration office", register: "sie", avatar: "B",
+    bio: "ein Sachbearbeiter am Schalter im Bürgeramt. Er hilft bei Anmeldungen, Anträgen und Terminen und spricht in klarem, förmlichem Amtsdeutsch."
+  },
+  {
+    id: "keller", kind: "open",
+    name: "Dr. Keller", role: "Hausärztin", roleEn: "Family doctor", register: "sie", avatar: "K",
+    bio: "eine Hausärztin in ihrer Praxis. Sie fragt nach Beschwerden, erklärt Untersuchungen und Rezepte in ruhigem, sachlichem Ton."
+  },
+  {
+    id: "max", kind: "open",
+    name: "Max", role: "Kumpel aus dem Fußballverein", roleEn: "Buddy from the football club", register: "du", avatar: "M",
+    bio: "ein guter Kumpel aus dem Fußballverein. Ihr kennt euch seit Jahren, sprecht locker über Training, Wochenende und das nächste Spiel."
+  },
+  {
+    id: "lea", kind: "open",
+    name: "Lea", role: "Kommilitonin an der Uni", roleEn: "Fellow student at university", register: "du", avatar: "L",
+    bio: "eine Kommilitonin aus dem gleichen Seminar. Ihr organisiert zusammen Referate, tauscht Notizen aus und redet auch mal über Privates."
+  },
+  {
+    id: "jonas", kind: "open",
+    name: "Jonas", role: "Kollege im Büro", roleEn: "Colleague at the office", register: "du", avatar: "J",
+    bio: "ein Kollege im Büro. In eurem Team ist man per du, auch wenn es um Arbeit geht. Er ist freundlich, direkt und leicht humorvoll."
+  }
+];
+
+const SCENARIOS = [
+  {
+    id: "supermarkt", kind: "scenario", suggestedLevel: "A1", avatar: "K",
+    name: "An der Supermarktkasse", role: "Kassiererin", roleEn: "Cashier", register: "sie",
+    bio: "eine Kassiererin an der Supermarktkasse. Sie ist freundlich, aber es geht schnell — Kunden warten.",
+    setting: "an der Kasse in einem Supermarkt", goal: "den Einkauf bezahlen und passend auf Fragen zur Zahlung antworten",
+    goalEn: "pay for your shopping and answer payment-related questions appropriately",
+    openingLine: "Guten Tag! Haben Sie eine Kundenkarte?"
+  },
+  {
+    id: "baeckerei", kind: "scenario", suggestedLevel: "A1", avatar: "V",
+    name: "In der Bäckerei", role: "Verkäuferin", roleEn: "Sales assistant", register: "sie",
+    bio: "eine Verkäuferin in einer Bäckerei. Sie fragt nach Wünschen und Mengen.",
+    setting: "an der Theke einer Bäckerei", goal: "etwas bestellen, die Menge nennen und bezahlen",
+    goalEn: "order something, state the quantity, and pay",
+    openingLine: "Guten Morgen, was darf es sein?"
+  },
+  {
+    id: "fahrkarte", kind: "scenario", suggestedLevel: "A2", avatar: "T",
+    name: "Fahrkarte kaufen", role: "Mitarbeiter am Schalter", roleEn: "Counter clerk", register: "sie",
+    bio: "ein Mitarbeiter am Fahrkartenschalter im Bahnhof. Er hilft bei der Wahl der richtigen Fahrkarte.",
+    setting: "am Fahrkartenschalter im Bahnhof", goal: "die passende Fahrkarte für dein Ziel kaufen",
+    goalEn: "buy the right ticket for your destination",
+    openingLine: "Guten Tag, wohin möchten Sie fahren?"
+  },
+  {
+    id: "buergeramt", kind: "scenario", suggestedLevel: "B1", avatar: "B",
+    name: "Anmeldung im Bürgeramt", role: "Sachbearbeiter, Bürgeramt", roleEn: "Clerk, citizens' registration office", register: "sie",
+    bio: "ein Sachbearbeiter am Schalter im Bürgeramt. Er hilft bei der Anmeldung einer neuen Adresse und spricht in klarem, förmlichem Amtsdeutsch.",
+    setting: "am Schalter im Bürgeramt", goal: "deine neue Adresse anmelden und die nötigen Angaben machen",
+    goalEn: "register your new address and provide the required details",
+    openingLine: "Der Nächste, bitte. Worum geht es?"
+  },
+  {
+    id: "handwerker", kind: "scenario", suggestedLevel: "B1", avatar: "H",
+    name: "Handwerker zu Besuch", role: "Klempner", roleEn: "Plumber", register: "sie",
+    bio: "ein Klempner, der wegen eines defekten Wasserhahns zu einem Termin bei dir zu Hause ist. Er erklärt, was das Problem ist und was es kostet.",
+    setting: "bei dir zu Hause, wegen einer Reparatur", goal: "das Problem erklären und verstehen, was der Handwerker vorschlägt und was es kostet",
+    goalEn: "explain the problem and understand what the tradesperson proposes and what it costs",
+    openingLine: "Guten Tag, ich bin wegen des Wasserhahns hier. Wo ist das Problem genau?"
+  },
+  {
+    id: "arzttermin", kind: "scenario", suggestedLevel: "B1", avatar: "P",
+    name: "Arzttermin vereinbaren", role: "Praxis-Empfang", roleEn: "Doctor's office reception", register: "sie",
+    bio: "eine Mitarbeiterin am Empfang einer Arztpraxis, die am Telefon Termine vergibt.",
+    setting: "am Telefon mit dem Empfang einer Arztpraxis", goal: "einen passenden Termin bekommen und den Grund des Besuchs kurz nennen",
+    goalEn: "get a suitable appointment and briefly state the reason for the visit",
+    openingLine: "Praxis Dr. Vogel, guten Tag. Wie kann ich Ihnen helfen?"
+  },
+  {
+    id: "wohnung", kind: "scenario", suggestedLevel: "B2", avatar: "V",
+    name: "Wohnungsbesichtigung", role: "Vermieterin", roleEn: "Landlady", register: "sie",
+    bio: "eine Vermieterin, die eine Wohnung zeigt und Fragen zu Miete, Nebenkosten und Zustand der Wohnung beantwortet.",
+    setting: "bei einer Wohnungsbesichtigung", goal: "die wichtigsten Fragen zur Wohnung stellen und beantwortet bekommen",
+    goalEn: "ask the key questions about the apartment and get them answered",
+    openingLine: "Willkommen, kommen Sie doch herein. Was möchten Sie zuerst sehen?"
+  },
+  {
+    id: "reklamation", kind: "scenario", suggestedLevel: "B2", avatar: "S",
+    name: "Reklamation", role: "Kundenservice", roleEn: "Customer service", register: "sie",
+    bio: "eine Mitarbeiterin im Kundenservice, die sich um Reklamationen zu defekten oder falschen Produkten kümmert.",
+    setting: "am Kundenservice-Schalter", goal: "das Problem mit dem Produkt erklären und eine Lösung (Umtausch, Erstattung) erreichen",
+    goalEn: "explain the problem with the product and reach a resolution (exchange, refund)",
+    openingLine: "Guten Tag, wie kann ich Ihnen helfen?"
+  },
+  {
+    id: "vertrag", kind: "scenario", suggestedLevel: "B2", avatar: "H",
+    name: "Vertrag kündigen", role: "Hotline-Mitarbeiter", roleEn: "Hotline representative", register: "sie",
+    bio: "ein Mitarbeiter der Kunden-Hotline eines Anbieters (z. B. Internet oder Handy), der Kündigungen bearbeitet und oft versucht, Kunden zu halten.",
+    setting: "am Telefon mit einer Kunden-Hotline", goal: "den Vertrag kündigen, auch wenn Gegenangebote kommen",
+    goalEn: "cancel the contract, even if counter-offers come up",
+    openingLine: "Kundenservice, guten Tag. Was kann ich für Sie tun?"
+  },
+  {
+    id: "elterngespraech", kind: "scenario", suggestedLevel: "C1", avatar: "L",
+    name: "Elterngespräch", role: "Lehrerin", roleEn: "Teacher", register: "sie",
+    bio: "eine Lehrerin, die in einem Elterngespräch über die Leistungen und das Verhalten eines Kindes spricht.",
+    setting: "in einem Elterngespräch in der Schule", goal: "die Einschätzung der Lehrerin verstehen und deine eigene Sicht darstellen",
+    goalEn: "understand the teacher's assessment and present your own view",
+    openingLine: "Schön, dass Sie Zeit gefunden haben. Fangen wir an — wie erleben Sie die Situation zu Hause?"
+  },
+  {
+    id: "gehalt", kind: "scenario", suggestedLevel: "C1", avatar: "C",
+    name: "Gehaltsverhandlung", role: "Vorgesetzte", roleEn: "Manager", register: "sie",
+    bio: "eine Vorgesetzte, mit der ein Gespräch über eine Gehaltserhöhung geführt wird. Sie hört zu, hinterfragt aber auch Argumente.",
+    setting: "in einem Gespräch mit der Vorgesetzten", goal: "gut begründete Argumente für eine Gehaltserhöhung vorbringen",
+    goalEn: "make well-reasoned arguments for a raise",
+    openingLine: "Sie wollten über Ihr Gehalt sprechen — ich höre."
+  },
+  {
+    id: "nachbarkonflikt", kind: "scenario", suggestedLevel: "C2", avatar: "N",
+    name: "Konflikt mit dem Nachbarn", role: "Nachbar", roleEn: "Neighbor", register: "sie",
+    bio: "ein Nachbar, der sich über Lärm beschwert. Das Gespräch beginnt angespannt und braucht diplomatisches Geschick.",
+    setting: "an der Wohnungstür, ein angespanntes Gespräch mit dem Nachbarn", goal: "den Konflikt entschärfen und zu einer für beide akzeptablen Lösung kommen",
+    goalEn: "defuse the conflict and reach a solution acceptable to both sides",
+    openingLine: "Ich muss mit Ihnen über den Lärm reden — das geht so nicht weiter."
+  }
+];
+
+const REGISTER_TEXT = {
+  sie: { pronoun: "Sie", label: "SIE" },
+  du:  { pronoun: "du",  label: "DU"  }
+};
+
+function buildSystemPrompt(p, level){
+  const r = REGISTER_TEXT[p.register];
+  const lvl = LEVEL_PROFILES[level] || LEVEL_PROFILES.B1;
+  let prompt = `Du bist ${p.name}, ${p.bio}
+Du sprichst ausschließlich Deutsch und redest die andere Person mit "${r.pronoun}" an. Bleib während des ganzen Gesprächs konsequent in dieser Rolle und in diesem Register (${p.register === "sie" ? "Sie-Form" : "Du-Form"}).`;
+
+  if (p.kind === "scenario") {
+    prompt += `\n\nSituation: ${p.setting}. Das (unausgesprochene) Ziel des Rollenspiels für die andere Person: ${p.goal}.`;
+  }
+
+  prompt += `\n\nSprachniveau der anderen Person: ${lvl.modelLabel}. ${lvl.promptFragment}
+
+Antworte kurz und natürlich, wie in einem echten Gespräch (ein bis drei Sätze), nicht wie ein Aufsatz.`;
+
+  if (p.kind === "scenario") {
+    prompt += `\n\nWenn das oben genannte Ziel des Rollenspiels erreicht wurde, füge als LETZTE Zeile eine eigene neue Zeile hinzu, die exakt "ZIEL_ERREICHT" lautet, ohne weiteren Text. Nutze das nur, wenn das Ziel wirklich erreicht ist, sonst lass es weg.`;
+  }
+
+  return prompt;
+}
+
+// NOTE ON DESIGN: correction-checking used to be one more instruction
+// bolted onto this same prompt (roleplay + register + level + goal +
+// grammar-grading, all in one generation). In real on-device testing
+// with the actual 1.5B model, that instruction was the one that got
+// dropped under load -- the model would roleplay fine and stay in
+// register but simply never emit the KORREKTUR line, even on clear
+// errors. Grammar/register checking is now its own single-purpose call
+// (buildCorrectionCheckPrompt + checkCorrection below), run after the
+// conversational reply. Isolating one task per prompt is far more
+// reliable for a small model than one prompt juggling several tasks --
+// this doubles the number of generations per turn, which is a real
+// latency cost on-device, but a correction feature that silently never
+// fires is worse than one that's a beat slower.
+function buildCorrectionCheckPrompt(p, level){
+  const r = REGISTER_TEXT[p.register];
+  const lvl = LEVEL_PROFILES[level] || LEVEL_PROFILES.B1;
+  return `Du bist ein deutscher Sprachlehrer. Du bekommst eine einzelne Nachricht einer Deutsch lernenden Person (Niveau ${lvl.modelLabel}). Deine einzige Aufgabe: prüfen, ob die Nachricht einen der folgenden Fehler enthält:
+- ANREDE: falsches Sie/du (in diesem Gespräch wird "${r.pronoun}" erwartet)
+- GRAMMATIK: ein klarer Grammatikfehler
+- WORTSCHATZ: ein falsches oder fehlendes Wort
+
+Sei für das Niveau ${level} nicht zu streng — korrigiere nur Fehler, die für dieses Niveau relevant sind, keine reinen Stilfragen.
+
+Antworte NUR in einem der beiden folgenden Formate, ohne jeden weiteren Text, keine Anführungszeichen, keine Erklärung:
+OK
+FEHLER: (ANREDE|GRAMMATIK|WORTSCHATZ) <kurze, konkrete Korrektur auf Deutsch, maximal 15 Wörter>
+
+Beispiel: "FEHLER: (GRAMMATIK) Es heißt 'mir geht es gut', nicht 'ich geht gut'."`;
+}
+
+function buildReminder(p, level){
+  const r = REGISTER_TEXT[p.register];
+  const lvl = LEVEL_PROFILES[level] || LEVEL_PROFILES.B1;
+  return `[Erinnerung: Du bist weiterhin ${p.name} und redest die andere Person mit "${r.pronoun}" an. Bleib in deiner Rolle und benutze ${lvl.reminderFragment}.]`;
+}
+
+/* ================================================================
+   Correction + goal-marker parsing
+   ================================================================ */
+const CORRECTION_SPLIT_RE = /\n?\s*korrektur\s*:\s*/i; // defensive only -- see note above buildCorrectionCheckPrompt
+const CORRECTION_CATEGORY_RE = /^\(?(anrede|grammatik|wortschatz)\)?\s*:?\s*/i;
+const GOAL_MARKER_RE = /\n?\s*ZIEL_ERREICHT\s*$/i;
+const FEHLER_RE = /^FEHLER:\s*\(?(anrede|grammatik|wortschatz)\)?\s*:?\s*(.+)$/is;
+
+// Isolated, single-purpose correction check -- see the design note above
+// buildCorrectionCheckPrompt for why this is a separate call rather than
+// one more instruction in the main roleplay prompt. Non-streaming
+// (stream:false) since the expected output is a few tokens; temperature
+// 0 for consistency, since this is a classification task, not creative
+// generation. Fails open: any error here (including a user-initiated
+// Stop landing mid-check) is swallowed and treated as "no correction" --
+// this is a secondary feature and must never surface as a hard error or
+// block the conversation.
+async function checkCorrection(userText, p, level){
+  try {
+    const resp = await engine.chat.completions.create({
+      messages: [
+        { role: "system", content: buildCorrectionCheckPrompt(p, level) },
+        { role: "user", content: userText }
+      ],
+      temperature: 0,
+      stream: false,
+    });
+    const raw = (resp.choices?.[0]?.message?.content || "").trim();
+    const m = raw.match(FEHLER_RE);
+    if (m) return { category: m[1].toLowerCase(), correction: m[2].trim() };
+    return { category: null, correction: null };
+  } catch (err) {
+    console.error("[correction-check]", err);
+    return { category: null, correction: null };
+  }
+}
+
+function extractGoalMarker(text){
+  if (GOAL_MARKER_RE.test(text)) {
+    return { text: text.replace(GOAL_MARKER_RE, "").trimEnd(), reached: true };
+  }
+  return { text, reached: false };
+}
+
+function splitCorrection(text){
+  const parts = text.split(CORRECTION_SPLIT_RE);
+  if (parts.length > 1) {
+    const raw = parts.slice(1).join(" ").trim();
+    const catMatch = raw.match(CORRECTION_CATEGORY_RE);
+    let category = "sonstiges";
+    let correctionText = raw;
+    if (catMatch) {
+      category = catMatch[1].toLowerCase();
+      correctionText = raw.slice(catMatch[0].length).trim();
+    }
+    return { main: parts[0].trim(), correction: correctionText || null, category: correctionText ? category : null };
+  }
+  return { main: text.trim(), correction: null, category: null };
+}
+
+/* ================================================================
+   Token budget (heuristic) — unchanged from prior QA fix pass
+   ================================================================ */
+const TOKEN_ESTIMATE_SAFETY_MARGIN = 1.15;
+function estimateTokens(str){
+  return Math.ceil(((str || "").length / 3.3) * TOKEN_ESTIMATE_SAFETY_MARGIN);
+}
+function totalTokens(messages){
+  return messages.reduce((sum, m) => sum + estimateTokens(m.content), 0);
+}
+function trimToBudget(history){
+  const budget = MODEL_CONTEXT_TOKENS - RESPONSE_RESERVE_TOKENS;
+  const trimmed = history.slice();
+  while (trimmed.length > 3 && totalTokens(trimmed) > budget) {
+    trimmed.splice(1, 2);
+  }
+  return trimmed;
+}
+
+/* ================================================================
+   Local turn-metric heuristics (used for the progression engine)
+   ================================================================ */
+function countWords(s){ return (s.trim().match(/\S+/g) || []).length; }
+function hasSubordinateMarker(s){ return /\b(weil|dass|obwohl|damit|während|nachdem|bevor|wenn)\b/i.test(s); }
+function hasKonjunktiv(s){ return /\b(würde|würdest|würden|wäre|wärst|wären|hätte|hättest|hätten)\b/i.test(s); }
+
+/* ================================================================
+   IndexedDB persistence layer
+   ----------------------------------------------------------------
+   Everything stays on-device, consistent with the app's zero-backend
+   design. If IndexedDB is unavailable (e.g. Safari private mode), the
+   app degrades to in-memory-only state rather than failing outright —
+   level/scenarios/progress just won't survive a reload in that case.
+   ================================================================ */
+const DB_NAME = "anrede-db";
+const DB_VERSION = 1;
+let dbInstance = null;
+let dbAvailable = true;
+
+function openDB(){
+  if (!("indexedDB" in window)) { dbAvailable = false; return Promise.resolve(null); }
+  return new Promise((resolve) => {
+    let req;
+    try {
+      req = indexedDB.open(DB_NAME, DB_VERSION);
+    } catch (_) { dbAvailable = false; resolve(null); return; }
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta", { keyPath: "key" });
+      if (!db.objectStoreNames.contains("turns")) db.createObjectStore("turns", { autoIncrement: true });
+      if (!db.objectStoreNames.contains("customScenarios")) db.createObjectStore("customScenarios", { keyPath: "id" });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => { dbAvailable = false; console.error("[db]", req.error); resolve(null); };
+  });
+}
+
+function dbTx(storeName, mode){
+  if (!dbInstance) return null;
+  return dbInstance.transaction(storeName, mode).objectStore(storeName);
+}
+
+function dbGetMeta(key, fallback){
+  return new Promise((resolve) => {
+    const store = dbTx("meta", "readonly");
+    if (!store) return resolve(fallback);
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result || fallback);
+    req.onerror = () => resolve(fallback);
+  });
+}
+function dbPutMeta(obj){
+  return new Promise((resolve) => {
+    const store = dbTx("meta", "readwrite");
+    if (!store) return resolve(false);
+    const req = store.put(obj);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+}
+function dbAddTurn(turn){
+  return new Promise((resolve) => {
+    const store = dbTx("turns", "readwrite");
+    if (!store) return resolve(false);
+    const req = store.add(turn);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+}
+function dbGetAllTurns(){
+  return new Promise((resolve) => {
+    const store = dbTx("turns", "readonly");
+    if (!store) return resolve([]);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => resolve([]);
+  });
+}
+function dbPutCustomScenario(obj){
+  return new Promise((resolve) => {
+    const store = dbTx("customScenarios", "readwrite");
+    if (!store) return resolve(false);
+    const req = store.put(obj);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+}
+function dbDeleteCustomScenario(id){
+  return new Promise((resolve) => {
+    const store = dbTx("customScenarios", "readwrite");
+    if (!store) return resolve(false);
+    const req = store.delete(id);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => resolve(false);
+  });
+}
+function dbGetAllCustomScenarios(){
+  return new Promise((resolve) => {
+    const store = dbTx("customScenarios", "readonly");
+    if (!store) return resolve([]);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => resolve([]);
+  });
+}
+
+function newId(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "cs-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
+}
+
+/* ================================================================
+   App state
+   ================================================================ */
+let engine = null;
+let currentPersona = null;
+let history = [];
+let userTurnCount = 0;
+let scenarioTurnCount = 0;
+let scenarioGoalShown = false;
+let scenarioLimitNoteShown = false;
+let modelReady = false;
+let busy = false;
+let activeRequestId = 0;
+let streamState = null;
+
+let profile = { level: null, levelHistory: [], lastSuggestion: null };
+let customScenarios = [];
+
+const el = {
+  gate: document.getElementById("gate"),
+  gateTitle: document.getElementById("gate-title"),
+  gateText: document.getElementById("gate-text"),
+  gateStatus: document.getElementById("gate-status"),
+  progressFill: document.getElementById("progress-fill"),
+  progressTrack: document.getElementById("progress-track"),
+  errorBox: document.getElementById("error-box"),
+  retryBtn: document.getElementById("retry-btn"),
+
+  menuBtn: document.getElementById("menu-btn"),
+  headAvatar: document.getElementById("head-avatar"),
+  headName: document.getElementById("head-name"),
+  headRole: document.getElementById("head-role"),
+  headStamp: document.getElementById("head-stamp"),
+  levelPillBtn: document.getElementById("level-pill-btn"),
+  progressBtn: document.getElementById("progress-btn"),
+
+  chat: document.getElementById("chat"),
+  emptyState: document.getElementById("empty-state"),
+  liveRegion: document.getElementById("live-region"),
+  inputBar: document.getElementById("input-bar"),
+  textInput: document.getElementById("text-input"),
+  sendBtn: document.getElementById("send-btn"),
+  stopBtn: document.getElementById("stop-btn"),
+
+  sheetBackdrop: document.getElementById("sheet-backdrop"),
+  sheet: document.getElementById("persona-sheet"),
+  personaList: document.getElementById("persona-list"),
+
+  levelSheetBackdrop: document.getElementById("level-sheet-backdrop"),
+  levelSheet: document.getElementById("level-sheet"),
+  levelList: document.getElementById("level-list"),
+
+  builderSheetBackdrop: document.getElementById("builder-sheet-backdrop"),
+  builderSheet: document.getElementById("builder-sheet"),
+  builderForm: document.getElementById("builder-form"),
+  builderClose: document.getElementById("builder-close"),
+  builderCancel: document.getElementById("builder-cancel"),
+  bName: document.getElementById("b-name"),
+  bRole: document.getElementById("b-role"),
+  bBio: document.getElementById("b-bio"),
+  bSetting: document.getElementById("b-setting"),
+  bGoal: document.getElementById("b-goal"),
+  bRegister: document.getElementById("b-register"),
+  bLevel: document.getElementById("b-level"),
+
+  progressSheetBackdrop: document.getElementById("progress-sheet-backdrop"),
+  progressSheet: document.getElementById("progress-sheet"),
+  progressClose: document.getElementById("progress-close"),
+  progressContent: document.getElementById("progress-content"),
+
+  confirmBackdrop: document.getElementById("confirm-backdrop"),
+  confirmText: document.getElementById("confirm-text"),
+  confirmOk: document.getElementById("confirm-ok"),
+  confirmCancel: document.getElementById("confirm-cancel"),
+
+  updateToast: document.getElementById("update-toast"),
+  updateReloadBtn: document.getElementById("update-reload-btn"),
+
+  levelToast: document.getElementById("level-toast"),
+  levelToastText: document.getElementById("level-toast-text"),
+  levelToastYes: document.getElementById("level-toast-yes"),
+  levelToastNo: document.getElementById("level-toast-no"),
+
+  langToggleBtn: document.getElementById("lang-toggle-btn"),
+};
+
+const isCoarsePointer = matchMedia("(pointer: coarse)").matches;
+
+/* ================================================================
+   Gate / model loading (unchanged from prior QA fix pass)
+   ================================================================ */
+const STALL_WATCHDOG_MS = 20000;
+
+async function initModel(){
+  el.retryBtn.style.display = "none";
+  el.errorBox.style.display = "none";
+  el.gateStatus.style.display = "block";
+  el.progressTrack.style.display = "block";
+
+  if (!("gpu" in navigator)) {
+    showGateError(t("gateNoWebGPU"), t("gateNoWebGPUDetail"));
+    return;
+  }
+
+  let stallTimer = null;
+  const armStallWatchdog = () => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      el.gateStatus.textContent = t("gateStalled");
+    }, STALL_WATCHDOG_MS);
+  };
+
+  try {
+    if (!webllm) {
+      el.gateStatus.textContent = t("gateLoadingModule");
+      armStallWatchdog();
+      webllm = await import("https://esm.run/@mlc-ai/web-llm");
+    }
+
+    el.gateStatus.textContent = t("gateLoadingModel");
+    armStallWatchdog();
+    engine = await webllm.CreateMLCEngine(MODEL_ID, {
+      initProgressCallback: (report) => {
+        armStallWatchdog();
+        const pct = Math.round((report.progress || 0) * 100);
+        el.progressFill.style.width = pct + "%";
+        el.gateStatus.textContent = report.text || (pct + " %");
+      }
+    });
+    clearTimeout(stallTimer);
+    modelReady = true;
+    el.gate.classList.add("hidden");
+    afterModelReady();
+  } catch (err) {
+    clearTimeout(stallTimer);
+    console.error(err);
+    showGateError(
+      t("gateModelLoadFailedTitle"),
+      (err && err.message) ? err.message : t("gateModelLoadFailedDetail")
+    );
+  }
+}
+
+function showGateError(title, detail){
+  el.gateTitle.textContent = t("gateErrorTitle");
+  el.gateText.textContent = title;
+  el.gateStatus.style.display = "none";
+  el.progressTrack.style.display = "none";
+  el.errorBox.textContent = detail;
+  el.errorBox.style.display = "block";
+  el.retryBtn.style.display = "inline-block";
+}
+
+el.retryBtn.addEventListener("click", initModel);
+
+// After the model is ready: if no level has been chosen yet, force the
+// level sheet first (this is the very first thing a new user picks).
+// Otherwise go straight to the persona/scenario sheet, same as before.
+function afterModelReady(){
+  if (!profile.level) {
+    openLevelSheet(true);
+  } else {
+    openSheet(true);
+  }
+}
+
+/* ================================================================
+   Custom confirm (replaces blocking confirm())
+   ================================================================ */
+let confirmResolver = null;
+function askConfirm(message){
+  el.confirmText.textContent = message;
+  el.confirmBackdrop.classList.add("open");
+  el.confirmOk.focus();
+  return new Promise((resolve) => { confirmResolver = resolve; });
+}
+function closeConfirm(result){
+  el.confirmBackdrop.classList.remove("open");
+  if (confirmResolver) { confirmResolver(result); confirmResolver = null; }
+}
+el.confirmOk.addEventListener("click", () => closeConfirm(true));
+el.confirmCancel.addEventListener("click", () => closeConfirm(false));
+el.confirmBackdrop.addEventListener("click", (e) => { if (e.target === el.confirmBackdrop) closeConfirm(false); });
+
+/* ================================================================
+   Level sheet
+   ================================================================ */
+function renderLevelList(){
+  el.levelList.innerHTML = "";
+  LEVELS.forEach((lvl) => {
+    const info = LEVEL_PROFILES[lvl];
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "level-card" + (profile.level === lvl ? " active" : "");
+    btn.innerHTML = `<span class="level-label">${info.label[uiLang]}</span><span class="level-desc">${info.selfCheck[uiLang]}</span>`;
+    btn.addEventListener("click", () => onLevelPicked(lvl));
+    el.levelList.appendChild(btn);
+  });
+}
+
+function openLevelSheet(force){
+  if (!modelReady && !force) return;
+  renderLevelList();
+  el.levelSheetBackdrop.classList.add("open");
+  el.levelSheet.classList.add("open");
+}
+function closeLevelSheet(){
+  el.levelSheetBackdrop.classList.remove("open");
+  el.levelSheet.classList.remove("open");
+}
+el.levelPillBtn.addEventListener("click", () => openLevelSheet());
+el.levelSheetBackdrop.addEventListener("click", closeLevelSheet);
+
+async function onLevelPicked(lvl){
+  const isFirstPick = !profile.level;
+  const changing = profile.level && profile.level !== lvl;
+  const hasConversation = el.chat.querySelectorAll(".msg").length > 0;
+
+  if (changing && hasConversation) {
+    const ok = await askConfirm(t("levelChangeConfirm", LEVEL_PROFILES[lvl].label[uiLang]));
+    if (!ok) return;
+  }
+
+  profile.level = lvl;
+  profile.levelHistory.push({ level: lvl, date: new Date().toISOString(), trigger: isFirstPick ? "self-selected" : "manual-override" });
+  await dbPutMeta({ key: "profile", ...profile, uiLang });
+  el.levelPillBtn.textContent = lvl;
+  closeLevelSheet();
+
+  if (isFirstPick) {
+    openSheet(true);
+  } else if (currentPersona) {
+    // Rebuild the current conversation's system prompt against the new level.
+    await selectPersona(currentPersona, { skipConfirm: true });
+  } else {
+    openSheet(true);
+  }
+}
+
+/* ================================================================
+   Level-progression suggestion engine (deterministic v1 — see
+   design discussion: an LLM-judge layer is deliberately deferred
+   until there's real usage data to validate the heuristic against)
+   ================================================================ */
+const MIN_TURNS_FOR_ASSESSMENT = 20;
+const MIN_DISTINCT_SESSIONS = 3;
+const ASSESSMENT_WINDOW = 30;
+const PROMOTE_CORRECTION_RATE = 0.15;
+const PROMOTE_REGISTER_RATE = 0.10;
+const DEMOTE_CORRECTION_RATE = 0.55;
+const DEMOTE_WINDOW = 10;
+const SUGGESTION_COOLDOWN_DAYS = 4;
+
+function daysSince(isoDate){
+  return (Date.now() - new Date(isoDate).getTime()) / 86400000;
+}
+
+async function maybeSuggestLevelChange(){
+  if (!profile.level) return;
+  const allTurns = await dbGetAllTurns();
+  const levelTurns = allTurns.filter((t) => t.level === profile.level);
+  if (levelTurns.length < MIN_TURNS_FOR_ASSESSMENT) return;
+
+  const distinctSessions = new Set(levelTurns.map((t) => new Date(t.ts).toDateString())).size;
+  if (distinctSessions < MIN_DISTINCT_SESSIONS) return;
+
+  if (profile.lastSuggestion && profile.lastSuggestion.level === profile.level &&
+      profile.lastSuggestion.decision === "dismissed" &&
+      daysSince(profile.lastSuggestion.date) < SUGGESTION_COOLDOWN_DAYS) {
+    return;
+  }
+
+  const window = levelTurns.slice(-ASSESSMENT_WINDOW);
+  const correctionRate = window.filter((t) => t.correctionCategory).length / window.length;
+  const registerRate = window.filter((t) => t.correctionCategory === "anrede").length / window.length;
+
+  const levelIdx = LEVELS.indexOf(profile.level);
+
+  if (correctionRate < PROMOTE_CORRECTION_RATE && registerRate < PROMOTE_REGISTER_RATE && levelIdx < LEVELS.length - 1) {
+    showLevelSuggestion(LEVELS[levelIdx + 1], "promote");
+    return;
+  }
+
+  const demoteWindow = levelTurns.slice(-DEMOTE_WINDOW);
+  if (demoteWindow.length >= DEMOTE_WINDOW) {
+    const demoteRate = demoteWindow.filter((t) => t.correctionCategory).length / demoteWindow.length;
+    if (demoteRate > DEMOTE_CORRECTION_RATE && levelIdx > 0) {
+      showLevelSuggestion(LEVELS[levelIdx - 1], "demote");
+    }
+  }
+}
+
+let pendingSuggestedLevel = null;
+function showLevelSuggestion(targetLevel, direction){
+  pendingSuggestedLevel = targetLevel;
+  el.levelToastText.textContent = direction === "promote"
+    ? t("levelPromoteSuggestion", LEVEL_PROFILES[targetLevel].label[uiLang])
+    : t("levelDemoteSuggestion", LEVEL_PROFILES[profile.level].label[uiLang], LEVEL_PROFILES[targetLevel].label[uiLang]);
+  el.levelToast.classList.add("show");
+}
+
+el.levelToastYes.addEventListener("click", async () => {
+  el.levelToast.classList.remove("show");
+  if (!pendingSuggestedLevel) return;
+  const target = pendingSuggestedLevel;
+  pendingSuggestedLevel = null;
+  profile.lastSuggestion = { level: profile.level, date: new Date().toISOString(), decision: "accepted" };
+  await onLevelPicked(target);
+});
+el.levelToastNo.addEventListener("click", async () => {
+  el.levelToast.classList.remove("show");
+  profile.lastSuggestion = { level: profile.level, date: new Date().toISOString(), decision: "dismissed" };
+  await dbPutMeta({ key: "profile", ...profile, uiLang });
+  pendingSuggestedLevel = null;
+});
+
+/* ================================================================
+   Turn-metric logging (feeds both the mistake log and the
+   progression engine)
+   ================================================================ */
+async function recordTurn(userText, correctionCategory, personaKind, goalReached){
+  const turn = {
+    ts: Date.now(),
+    level: profile.level,
+    personaKind,
+    wordCount: countWords(userText),
+    hasSubordinate: hasSubordinateMarker(userText),
+    hasKonjunktiv: hasKonjunktiv(userText),
+    correctionCategory: correctionCategory || null,
+    goalReached: !!goalReached
+  };
+  await dbAddTurn(turn);
+  await maybeSuggestLevelChange();
+}
+
+/* ================================================================
+   Progress / mistake-log sheet
+   ================================================================ */
+function openProgressSheet(){
+  renderProgressContent();
+  el.progressSheetBackdrop.classList.add("open");
+  el.progressSheet.classList.add("open");
+}
+function closeProgressSheet(){
+  el.progressSheetBackdrop.classList.remove("open");
+  el.progressSheet.classList.remove("open");
+}
+el.progressBtn.addEventListener("click", openProgressSheet);
+el.progressClose.addEventListener("click", closeProgressSheet);
+el.progressSheetBackdrop.addEventListener("click", closeProgressSheet);
+
+async function renderProgressContent(){
+  const allTurns = await dbGetAllTurns();
+  const cutoff = Date.now() - 30 * 86400000;
+  const recent = allTurns.filter((t) => t.ts >= cutoff);
+  const levelLabel = profile.level ? LEVEL_PROFILES[profile.level].label[uiLang] : t("levelNotChosen");
+
+  const counts = { anrede: 0, grammatik: 0, wortschatz: 0 };
+  recent.forEach((t) => { if (t.correctionCategory && counts[t.correctionCategory] !== undefined) counts[t.correctionCategory]++; });
+  const maxCount = Math.max(1, counts.anrede, counts.grammatik, counts.wortschatz);
+
+  el.progressContent.innerHTML = "";
+
+  const levelBlock = document.createElement("div");
+  levelBlock.className = "stat-block";
+  levelBlock.innerHTML = `<div class="stat-title">${t("currentLevel")}</div><div class="stat-meta">${levelLabel} · ${t("messagesLast30", recent.length)}</div>`;
+  el.progressContent.appendChild(levelBlock);
+
+  const statBlock = document.createElement("div");
+  statBlock.className = "stat-block";
+  statBlock.innerHTML = `<div class="stat-title">${t("correctionsByCategory")}</div>`;
+  if (recent.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "stat-empty";
+    empty.textContent = t("noDataYet");
+    statBlock.appendChild(empty);
+  } else {
+    [[t("catAnrede"), "anrede"], [t("catGrammatik"), "grammatik"], [t("catWortschatz"), "wortschatz"]].forEach(([label, key]) => {
+      const row = document.createElement("div");
+      row.className = "stat-row";
+      const pct = Math.round((counts[key] / maxCount) * 100);
+      row.innerHTML = `
+        <span class="stat-name">${label}</span>
+        <span class="stat-track"><span class="stat-fill ${key}" style="width:${pct}%"></span></span>
+        <span class="stat-count">${counts[key]}</span>`;
+      statBlock.appendChild(row);
+    });
+  }
+  el.progressContent.appendChild(statBlock);
+
+  const changeBlock = document.createElement("div");
+  changeBlock.className = "stat-block";
+  changeBlock.innerHTML = `<button type="button" class="btn-secondary" id="progress-change-level-btn" style="width:100%;">${t("changeLevelManually")}</button>`;
+  el.progressContent.appendChild(changeBlock);
+  document.getElementById("progress-change-level-btn").addEventListener("click", () => {
+    closeProgressSheet();
+    openLevelSheet(true);
+  });
+}
+
+/* ================================================================
+   Persona / scenario sheet
+   ================================================================ */
+function allScenarios(){
+  return SCENARIOS.concat(customScenarios);
+}
+
+function personaCardHTML(p, opts){
+  opts = opts || {};
+  const displayRole = (uiLang === "en" && p.roleEn) ? p.roleEn : p.role;
+  const displayGoal = (uiLang === "en" && p.goalEn) ? p.goalEn : p.goal;
+  const goalLine = p.kind === "scenario" ? `<div class="goal">${t("goalLabel")}: ${displayGoal}</div>` : "";
+  const levelTag = p.kind === "scenario" ? `<span class="level-tag">${p.suggestedLevel || p.level || ""}</span>` : "";
+  const delBtn = opts.deletable
+    ? `<span class="del-btn" data-del="${p.id}" title="${t("delete")}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M9 6V4h6v2M6 6l1 14h10l1-14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
+    : "";
+  return `
+    <div class="avatar ${p.register}">${p.avatar}</div>
+    <div class="info">
+      <div class="name">${p.name}</div>
+      <div class="role">${displayRole}</div>
+      ${goalLine}
+    </div>
+    ${levelTag}
+    <div class="stamp ${p.register}">${REGISTER_TEXT[p.register].label}</div>
+    ${delBtn}
+  `;
+}
+
+function renderPersonaList(){
+  el.personaList.innerHTML = "";
+
+  const addSection = (label) => {
+    const s = document.createElement("div");
+    s.className = "section-label";
+    s.textContent = label;
+    el.personaList.appendChild(s);
+  };
+  const addCard = (p, opts) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "persona-card" + (currentPersona && currentPersona.id === p.id ? " active" : "");
+    btn.innerHTML = personaCardHTML(p, opts);
+    btn.addEventListener("click", (e) => {
+      if (e.target.closest("[data-del]")) return;
+      selectPersona(p);
+    });
+    if (opts && opts.deletable) {
+      btn.querySelector("[data-del]").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const ok = await askConfirm(t("deleteScenarioConfirm", p.name));
+        if (!ok) return;
+        await dbDeleteCustomScenario(p.id);
+        customScenarios = customScenarios.filter((c) => c.id !== p.id);
+        renderPersonaList();
+      });
+    }
+    el.personaList.appendChild(btn);
+  };
+
+  addSection(t("sectionScenarios"));
+  SCENARIOS.forEach((p) => addCard(p, { deletable: false }));
+
+  if (customScenarios.length > 0) {
+    addSection(t("sectionCustomScenarios"));
+    customScenarios.forEach((p) => addCard(p, { deletable: true }));
+  }
+
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "add-scenario-btn";
+  addBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> ${t("addScenario")}`;
+  addBtn.addEventListener("click", openBuilderSheet);
+  el.personaList.appendChild(addBtn);
+
+  addSection(t("sectionFreeChat"));
+  PERSONAS.forEach((p) => addCard(p, { deletable: false }));
+}
+
+function openSheet(force){
+  if (!modelReady && !force) return;
+  renderPersonaList();
+  el.sheetBackdrop.classList.add("open");
+  el.sheet.classList.add("open");
+}
+function closeSheet(){
+  el.sheetBackdrop.classList.remove("open");
+  el.sheet.classList.remove("open");
+  el.menuBtn.focus();
+}
+
+el.menuBtn.addEventListener("click", () => openSheet());
+el.sheetBackdrop.addEventListener("click", closeSheet);
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (el.sheet.classList.contains("open")) closeSheet();
+  if (el.levelSheet.classList.contains("open")) closeLevelSheet();
+  if (el.builderSheet.classList.contains("open")) closeBuilderSheet();
+  if (el.progressSheet.classList.contains("open")) closeProgressSheet();
+  if (el.confirmBackdrop.classList.contains("open")) closeConfirm(false);
+});
+
+async function selectPersona(p, opts){
+  opts = opts || {};
+  const switching = currentPersona && currentPersona.id !== p.id;
+  const hasConversation = el.chat.querySelectorAll(".msg").length > 0;
+
+  if (!opts.skipConfirm && switching && hasConversation) {
+    const ok = await askConfirm(t("switchPersonaConfirm", p.name));
+    if (!ok) return;
+  }
+
+  activeRequestId++;
+  if (busy && engine) {
+    try { await engine.interruptGenerate(); } catch (_) { /* best effort */ }
+  }
+  busy = false;
+  streamState = null;
+  hideStopShowSend();
+
+  currentPersona = p;
+  history = [{ role: "system", content: buildSystemPrompt(p, profile.level) }];
+  userTurnCount = 0;
+  scenarioTurnCount = 0;
+  scenarioGoalShown = false;
+  scenarioLimitNoteShown = false;
+
+  el.headAvatar.className = "avatar " + p.register;
+  el.headAvatar.textContent = p.avatar;
+  el.headName.textContent = p.name;
+  el.headRole.textContent = p.kind === "scenario"
+    ? `${t("goalLabel")}: ${(uiLang === "en" && p.goalEn) ? p.goalEn : p.goal}`
+    : ((uiLang === "en" && p.roleEn) ? p.roleEn : p.role);
+  el.headStamp.textContent = REGISTER_TEXT[p.register].label;
+  el.headStamp.className = "stamp " + p.register;
+  el.headStamp.style.display = "inline-block";
+  el.chat.innerHTML = "";
+  el.textInput.disabled = false;
+  el.sendBtn.disabled = false;
+
+  if (p.kind === "scenario" && p.openingLine) {
+    history.push({ role: "assistant", content: p.openingLine });
+    addMessage("persona", p.openingLine, { register: p.register });
+  }
+
+  el.textInput.focus();
+  closeSheet();
+}
+
+/* ================================================================
+   Chat rendering
+   ================================================================ */
+function addMessage(role, text, opts){
+  opts = opts || {};
+  el.emptyState.remove?.();
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + (role === "user" ? "user" : role === "error" ? "error persona" : "persona " + (opts.register || ""));
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+
+  if (opts.retry) {
+    const row = document.createElement("div");
+    row.className = "retry-row";
+    const retryBtn = document.createElement("button");
+    retryBtn.type = "button";
+    retryBtn.className = "retry-btn";
+    retryBtn.textContent = t("retrySend");
+    retryBtn.addEventListener("click", () => {
+      wrap.remove();
+      el.textInput.value = opts.retry;
+      el.textInput.focus();
+      sendMessage();
+    });
+    row.appendChild(retryBtn);
+    wrap.appendChild(row);
+  }
+
+  el.chat.appendChild(wrap);
+  el.chat.scrollTop = el.chat.scrollHeight;
+  return { wrap, bubble };
+}
+
+function addScenarioNote(text, kind){
+  el.emptyState.remove?.();
+  const note = document.createElement("div");
+  note.className = kind === "goal" ? "goal-note" : "scenario-note";
+  note.textContent = text;
+  el.chat.appendChild(note);
+  el.chat.scrollTop = el.chat.scrollHeight;
+}
+
+function escapeForLive(s){ return s.replace(/\s+/g, " ").trim(); }
+
+/* ================================================================
+   Sending (streaming)
+   ================================================================ */
+el.inputBar.addEventListener("submit", (e) => { e.preventDefault(); sendMessage(); });
+
+el.textInput.addEventListener("input", () => {
+  el.textInput.style.height = "auto";
+  el.textInput.style.height = Math.min(el.textInput.scrollHeight, 120) + "px";
+});
+
+if (!isCoarsePointer) {
+  el.textInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+}
+
+function hideStopShowSend(){
+  el.stopBtn.style.display = "none";
+  el.sendBtn.style.display = "inline-flex";
+}
+function hideSendShowStop(){
+  el.stopBtn.style.display = "inline-flex";
+  el.sendBtn.style.display = "none";
+}
+
+el.stopBtn.addEventListener("click", async () => {
+  if (!busy || !engine) return;
+  activeRequestId++;
+  try { await engine.interruptGenerate(); } catch (_) { /* best effort */ }
+
+  if (streamState) {
+    const { bubble, wrap } = streamState;
+    bubble.classList.remove("streaming-cursor");
+    const partialText = bubble.textContent.trim();
+    if (partialText) {
+      history.push({ role: "assistant", content: partialText });
+    } else {
+      wrap.remove();
+    }
+    streamState = null;
+  }
+
+  busy = false;
+  el.sendBtn.disabled = false;
+  hideStopShowSend();
+  el.textInput.focus();
+});
+
+async function sendMessage(){
+  if (busy || !modelReady || !currentPersona) return;
+  const text = el.textInput.value.trim();
+  if (!text) return;
+
+  const myRequestId = ++activeRequestId;
+
+  el.textInput.value = "";
+  el.textInput.style.height = "auto";
+  addMessage("user", text);
+  history.push({ role: "user", content: text });
+  userTurnCount++;
+  if (currentPersona.kind === "scenario") scenarioTurnCount++;
+
+  busy = true;
+  el.sendBtn.disabled = true;
+  hideSendShowStop();
+
+  let payload = trimToBudget(history);
+  if (userTurnCount > 0 && userTurnCount % REMINDER_EVERY_N_USER_TURNS === 0) {
+    payload = payload.slice(0, -1).concat(
+      { role: "system", content: buildReminder(currentPersona, profile.level) },
+      payload[payload.length - 1]
+    );
+  }
+
+  const { wrap, bubble } = addMessage("persona", "", { register: currentPersona.register });
+  bubble.classList.add("streaming-cursor");
+  streamState = { bubble, wrap };
+
+  let full = "";
+  let streamErrored = false;
+
+  try {
+    const stream = await engine.chat.completions.create({
+      messages: payload,
+      temperature: 0.7,
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      if (myRequestId !== activeRequestId) { streamErrored = true; break; }
+      const delta = chunk.choices?.[0]?.delta?.content || "";
+      if (delta) {
+        full += delta;
+        const { text: withoutGoal } = extractGoalMarker(full);
+        const { main } = splitCorrection(withoutGoal);
+        bubble.textContent = main;
+        el.chat.scrollTop = el.chat.scrollHeight;
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    streamErrored = true;
+    if (myRequestId === activeRequestId) {
+      bubble.classList.remove("streaming-cursor");
+      wrap.remove();
+      streamState = null;
+      history.pop();
+      userTurnCount--;
+      if (currentPersona.kind === "scenario") scenarioTurnCount--;
+      addMessage("error", t("errorReplyFailed"), { retry: text });
+    }
+  }
+
+  if (myRequestId === activeRequestId) {
+    bubble.classList.remove("streaming-cursor");
+    let reached = false;
+    let check = { category: null, correction: null };
+
+    if (!streamErrored) {
+      const extracted = extractGoalMarker(full);
+      reached = extracted.reached;
+      const withoutGoal = extracted.text;
+      // Defensive strip only -- the main roleplay prompt no longer asks
+      // for a KORREKTUR line (see the design note above
+      // buildCorrectionCheckPrompt), but this costs nothing if the model
+      // never emits it and protects against it doing so anyway.
+      const main = withoutGoal.replace(CORRECTION_SPLIT_RE, "\n").trim();
+      bubble.textContent = main || "…";
+      history.push({ role: "assistant", content: withoutGoal });
+      el.liveRegion.textContent = `${currentPersona.name}: ${escapeForLive(main)}`;
+
+      if (currentPersona.kind === "scenario") {
+        if (reached && !scenarioGoalShown) {
+          scenarioGoalShown = true;
+          addScenarioNote(t("goalReached"), "goal");
+        } else if (!reached && !scenarioGoalShown && scenarioTurnCount >= SCENARIO_MAX_TURNS && !scenarioLimitNoteShown) {
+          scenarioLimitNoteShown = true;
+          addScenarioNote(t("scenarioLimitNote"), "info");
+        }
+      }
+
+      // Second, isolated model call: dedicated grammar/register check on
+      // just the user's last message. Runs after the conversational
+      // reply is already on screen, so the user sees a fast response
+      // first and the correction note (if any) lands a beat later.
+      streamState = null; // the streaming part of this turn is fully done
+      check = await checkCorrection(text, currentPersona, profile.level);
+    } else {
+      streamState = null;
+    }
+
+    // Re-check activeRequestId: the user may have hit Stop or switched
+    // persona/level during the checkCorrection() await above. If so, the
+    // handler that superseded us already owns busy/UI state -- only the
+    // turn-metric logging below still happens unconditionally, since it's
+    // a data-recording concern, not a UI one.
+    if (myRequestId === activeRequestId) {
+      if (!streamErrored && check.category) {
+        const note = document.createElement("div");
+        note.className = "correction";
+        const catLabel = { anrede: t("catAnrede"), grammatik: t("catGrammatik"), wortschatz: t("catWortschatz") }[check.category] || "";
+        note.innerHTML = `<span class="mark">✎</span>${catLabel ? `<span class="cat">${catLabel}:</span>` : ""}<span></span>`;
+        note.querySelector("span:last-child").textContent = check.correction;
+        wrap.appendChild(note);
+        el.chat.scrollTop = el.chat.scrollHeight;
+      }
+      busy = false;
+      el.sendBtn.disabled = false;
+      hideStopShowSend();
+      el.textInput.focus();
+    }
+    if (!streamErrored) {
+      recordTurn(text, check.category, currentPersona.kind, reached && currentPersona.kind === "scenario");
+    }
+  }
+}
+
+/* ================================================================
+   Custom scenario builder
+   ================================================================ */
+function openBuilderSheet(){
+  el.builderForm.reset();
+  el.bLevel.innerHTML = LEVELS.map((l) => `<option value="${l}" ${l === profile.level ? "selected" : ""}>${LEVEL_PROFILES[l].label[uiLang]}</option>`).join("");
+  el.bRegister.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.value === "sie"));
+  closeSheet();
+  el.builderSheetBackdrop.classList.add("open");
+  el.builderSheet.classList.add("open");
+}
+function closeBuilderSheet(){
+  el.builderSheetBackdrop.classList.remove("open");
+  el.builderSheet.classList.remove("open");
+}
+el.builderClose.addEventListener("click", closeBuilderSheet);
+el.builderCancel.addEventListener("click", closeBuilderSheet);
+el.builderSheetBackdrop.addEventListener("click", closeBuilderSheet);
+
+el.bRegister.querySelectorAll("button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    el.bRegister.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+el.builderForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const register = el.bRegister.querySelector("button.active")?.dataset.value || "sie";
+  const name = el.bName.value.trim();
+  const scenario = {
+    id: newId(),
+    kind: "scenario",
+    name,
+    role: el.bRole.value.trim(),
+    register,
+    avatar: (name[0] || "?").toUpperCase(),
+    bio: el.bBio.value.trim(),
+    setting: el.bSetting.value.trim(),
+    goal: el.bGoal.value.trim(),
+    level: el.bLevel.value,
+    suggestedLevel: el.bLevel.value,
+    openingLine: null,
+    createdAt: new Date().toISOString()
+  };
+  await dbPutCustomScenario(scenario);
+  customScenarios.push(scenario);
+  closeBuilderSheet();
+  openSheet(true);
+});
+
+/* ================================================================
+   Service worker + update flow (unchanged from prior QA fix pass)
+   ================================================================ */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("./sw.js");
+      reg.addEventListener("updatefound", () => {
+        const installing = reg.installing;
+        if (!installing) return;
+        installing.addEventListener("statechange", () => {
+          if (installing.state === "installed" && navigator.serviceWorker.controller) {
+            el.updateToast.classList.add("show");
+          }
+        });
+      });
+    } catch (_) { /* offline-first apps should still work without SW */ }
+  });
+  el.updateReloadBtn.addEventListener("click", () => window.location.reload());
+}
+
+/* ================================================================
+   Startup
+   ================================================================ */
+// Applies all static-HTML UI chrome text from the current uiLang. This is
+// UI chrome only (buttons, labels, placeholders, sheet titles) -- persona
+// names, scenario descriptions, and anything the model says stay German
+// always, since that's the language being taught (see STRINGS/t() above).
+function applyStaticUIStrings(){
+  document.title = t("appName");
+  el.gateTitle.textContent = t("gateTitle");
+  el.gateText.textContent = t("gateText");
+  if (!modelReady) el.gateStatus.textContent = t("gateCheckingDevice");
+  el.retryBtn.textContent = t("retry");
+
+  el.menuBtn.setAttribute("aria-label", t("menuAria"));
+  el.levelPillBtn.setAttribute("aria-label", t("levelAria"));
+  el.progressBtn.setAttribute("aria-label", t("progressAria"));
+  if (!currentPersona) {
+    el.headName.textContent = t("headNamePlaceholder");
+    el.headRole.textContent = t("headRolePlaceholder");
+  } else {
+    el.headRole.textContent = currentPersona.kind === "scenario"
+      ? `${t("goalLabel")}: ${(uiLang === "en" && currentPersona.goalEn) ? currentPersona.goalEn : currentPersona.goal}`
+      : ((uiLang === "en" && currentPersona.roleEn) ? currentPersona.roleEn : currentPersona.role);
+  }
+
+  const emptyTitleEl = document.getElementById("empty-title");
+  const emptyBodyEl = document.getElementById("empty-body");
+  if (emptyTitleEl) emptyTitleEl.textContent = t("emptyTitle");
+  if (emptyBodyEl) emptyBodyEl.textContent = t("emptyBody");
+
+  el.textInput.placeholder = t("inputPlaceholder");
+  el.textInput.setAttribute("aria-label", t("inputAria"));
+  el.sendBtn.setAttribute("aria-label", t("sendAria"));
+  el.stopBtn.setAttribute("aria-label", t("stopAria"));
+
+  el.updateToastText && (el.updateToastText.textContent = t("updateAvailable"));
+  el.updateReloadBtn.textContent = t("reload");
+
+  const personaTitleEl = document.getElementById("persona-sheet-title");
+  personaTitleEl.innerHTML = `${t("personaSheetTitle")}<small id="persona-sheet-hint">${t("personaSheetHint")}</small>`;
+  const levelTitleEl = document.getElementById("level-sheet-title");
+  levelTitleEl.innerHTML = `${t("levelSheetTitle")}<small id="level-sheet-hint">${t("levelSheetHint")}</small>`;
+
+  document.getElementById("builder-title").textContent = t("builderTitle");
+  document.getElementById("b-name-label").textContent = t("builderName");
+  el.bName.placeholder = t("builderNamePh");
+  document.getElementById("b-role-label").textContent = t("builderRole");
+  el.bRole.placeholder = t("builderRolePh");
+  document.getElementById("b-bio-label").textContent = t("builderBio");
+  el.bBio.placeholder = t("builderBioPh");
+  document.getElementById("b-setting-label").textContent = t("builderSetting");
+  el.bSetting.placeholder = t("builderSettingPh");
+  document.getElementById("b-goal-label").textContent = t("builderGoal");
+  el.bGoal.placeholder = t("builderGoalPh");
+  document.getElementById("b-register-label").textContent = t("builderRegister");
+  document.getElementById("b-level-label").textContent = t("builderLevel");
+  el.builderCancel.textContent = t("cancel");
+  const builderSaveBtn = document.getElementById("builder-save");
+  if (builderSaveBtn) builderSaveBtn.textContent = t("save");
+
+  document.getElementById("progress-sheet-title").textContent = t("progressTitle");
+
+  el.confirmCancel.textContent = t("cancel");
+  el.confirmOk.textContent = t("yesSwitch");
+
+  el.langToggleBtn.textContent = uiLang === "en" ? "DE" : "EN";
+  el.langToggleBtn.setAttribute("aria-label", uiLang === "en" ? "Auf Deutsch umschalten" : "Switch UI language to English");
+
+  // Re-render whichever list/sheet content is currently populated, so open
+  // sheets update immediately on a language toggle instead of only on next
+  // open.
+  if (el.personaList.children.length) renderPersonaList();
+  if (el.levelList.children.length) renderLevelList();
+  if (el.progressContent.children.length) renderProgressContent();
+}
+
+el.langToggleBtn.addEventListener("click", async () => {
+  uiLang = uiLang === "en" ? "de" : "en";
+  applyStaticUIStrings();
+  await dbPutMeta({ key: "profile", ...profile, uiLang });
+});
+
+async function init(){
+  dbInstance = await openDB();
+  const savedProfile = await dbGetMeta("profile", null);
+  if (savedProfile) {
+    profile = { level: savedProfile.level || null, levelHistory: savedProfile.levelHistory || [], lastSuggestion: savedProfile.lastSuggestion || null };
+    uiLang = savedProfile.uiLang === "de" ? "de" : "en";
+  }
+  applyStaticUIStrings();
+  if (profile.level) el.levelPillBtn.textContent = profile.level;
+  customScenarios = await dbGetAllCustomScenarios();
+  initModel();
+}
+
+init();
+</script>
+</body>
+</html>
