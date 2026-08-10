@@ -14,19 +14,27 @@ The UI chrome (buttons, labels, menus) is bilingual — English by default, with
 - **Automatic progress assessment**: the app tracks corrections by category (register/grammar/vocabulary) across sessions and — with a deliberate delay and cooldown, never automatically — suggests moving to a higher or lower level. This is a deterministic heuristic (correction rate over multiple days), not a language-model judgment call — intentionally, since a small on-device model has no verified reliability for self-assessment of this kind.
 - **Progress view**: a bar chart of corrections by category over the last 30 days, reachable via the chart icon in the header.
 
-## Model choice: Llama-3.2-1B-Instruct
+## Model choice: SmolLM2-360M-Instruct, and why this was harder than it looks
 
-The app runs Meta's `Llama-3.2-1B-Instruct` (q4f16_1 quantization via WebLLM), not the larger Qwen2.5-1.5B model used in earlier versions. Two reasons, both evidence-based rather than a "bigger is better" assumption:
+The app runs `SmolLM2-360M-Instruct` (q4f16_1 quantization via WebLLM). This was decided empirically, on real hardware, after larger models repeatedly failed — not chosen for quality reasons, and it's worth recording the actual finding rather than a tidy-sounding rationale:
 
-1. **Memory.** At 1.2B parameters (vs. 1.5B), it puts less pressure on iOS Safari's comparatively tight per-tab memory ceiling — the binding constraint for an in-browser on-device model on iPhone.
-2. **Documented German support.** Meta's official Llama 3.2 model card lists German as one of eight officially supported languages. Qwen2.5's model card makes no equivalent documented claim for German specifically. Given the app teaches German, a smaller model with a documented claim beats a larger model without one.
+**iOS Safari has a memory ceiling for this kind of workload that sits below 711MB, on both an iPhone 13 and an iPhone 16, in real Safari (not a third-party WKWebView-hosting browser — those are typically even more constrained, but were ruled out as the sole explanation here since Safari itself also fails).** Confirmed on-device, each after a clean Safari state reset:
 
-The real model's context window is 128K tokens per its `mlc-chat-config.json`, but this app caps it far below that (`MODEL_CONTEXT_TOKENS` in `index.html`) — KV-cache memory scales with context length, and iOS Safari's memory budget is the tightest constraint this app runs under.
+| Model | VRAM | Result |
+|---|---|---|
+| SmolLM2-135M / 360M-Instruct | ~360–376MB | Survives: load, message, keyboard, background/relaunch |
+| gemma3-1b-it-q4f16_1 | 711MB | Crashes (Safari's native repeated-crash page) |
+| Llama-3.2-1B-Instruct-q4f16_1 | 879MB | Crashes |
+| Qwen2.5-1.5B-Instruct-q4f16_1 | 1630MB | Crashes (the original model) |
+
+**The consequence, stated plainly:** no model this small has documented German-language training. Meta's Llama 3.2 card officially lists German as one of eight supported languages — a real, size-specific claim, verified directly against the model card — but Llama-3.2-1B crashes at 879MB regardless. SmolLM2 carries no equivalent documented claim for German either way. This app currently trades conversational quality for stability on iOS Safari; that trade-off is a live product decision, not a solved problem, and should be revisited if Apple raises WebKit's memory ceiling, WebGPU matures, or the app moves to a native iOS shell (Core ML/MLX) where memory is a real OS entitlement rather than a web page's budget.
+
+The model's context window is 8192 tokens per its `mlc-chat-config.json`, but this app caps it far below that (`MODEL_CONTEXT_TOKENS` in `index.html`) — KV-cache memory scales with context length, and iOS Safari's memory budget is the tightest constraint this app runs under.
 
 ## What runs where
 
 - **Vercel**: hosts the static files (`index.html`, `manifest.json`, `sw.js`, icons, `vercel.json`). That's all.
-- **Your browser**: on first launch, downloads the model (`Llama-3.2-1B-Instruct`, roughly 1 GB) from Hugging Face / the WebLLM CDN, caches it locally (Cache Storage / IndexedDB), and from then on runs every conversation entirely on-device. No prompt and no reply is ever sent to Vercel or any other server.
+- **Your browser**: on first launch, downloads the model (`SmolLM2-360M-Instruct`, a few hundred MB) from Hugging Face / the WebLLM CDN, caches it locally (Cache Storage / IndexedDB), and from then on runs every conversation entirely on-device. No prompt and no reply is ever sent to Vercel or any other server.
 - Only external network requests at runtime: the WebLLM script and the model weights (on first launch, or on a cache miss), plus Google Fonts.
 
 ## Deploy: GitHub → Vercel
@@ -71,7 +79,7 @@ The browser only checks for a new service worker version when the **bytes of `sw
 
 ## Switching models
 
-In `index.html`, near the top of the `<script type="module">` block, adjust the `MODEL_ID` constant (currently `Llama-3.2-1B-Instruct-q4f16_1-MLC`) and `MODEL_CONTEXT_TOKENS`. Larger models produce better German but need more memory and a larger initial download — see "Model choice" above before swapping to a smaller model, since instruction-following (especially for the correction feature) degrades faster than raw fluency as models shrink.
+In `index.html`, near the top of the `<script type="module">` block, adjust the `MODEL_ID` constant (currently `SmolLM2-360M-Instruct-q4f16_1-MLC`) and `MODEL_CONTEXT_TOKENS`. Read "Model choice" above before trying a bigger model — the last three attempts above 700MB all crashed on real iPhones in Safari, so treat any size increase as a real on-device test, not a config tweak, and check the target model's `mlc-chat-config.json` for `sliding_window_size` — some prebuilt configs (Gemma 3's did) ship with both `context_window_size` and `sliding_window_size` positive, which WebLLM's engine rejects outright.
 
 ## Testing locally
 
