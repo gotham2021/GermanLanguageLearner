@@ -203,6 +203,29 @@
   }
   .icon-btn:hover{ background: var(--border); }
   .icon-btn:disabled{ opacity: 0.35; }
+  .level-badge{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    background: var(--surface2);
+    padding: 5px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .level-badge:hover{ color: var(--ink); }
+  .level-card{
+    font-family: var(--font-ui); font-weight: 600; font-size: 14px;
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; text-align:left;
+    padding: 12px 14px; border-radius: 14px;
+    border: 1.5px solid transparent;
+  }
+  .level-card:hover{ background: var(--surface2); }
+  .level-card.active{ border-color: var(--formal); }
+  .level-card .sub{ font-family: var(--font-ui); font-weight:400; font-size:12px; color: var(--ink-soft); margin-top: 2px; }
+  .level-card .check{ color: var(--formal); flex-shrink:0; opacity:0; }
+  .level-card.active .check{ opacity:1; }
 
   /* ---------- Chat area ---------- */
   #chat{
@@ -326,17 +349,17 @@
   #send-btn:disabled{ opacity:0.35; }
   #stop-btn{ background: var(--danger); color: var(--surface); display:none; }
 
-  /* ---------- Persona sheet ---------- */
-  #sheet-backdrop{
+  /* ---------- Persona sheet (shared with the level sheet below) ---------- */
+  #sheet-backdrop, #level-sheet-backdrop{
     position:absolute; inset:0;
     background: rgba(27,32,36,0.4);
     opacity:0; pointer-events:none;
     transition: opacity .2s ease;
     z-index: 20;
   }
-  #sheet-backdrop.open{ opacity:1; pointer-events:auto; }
+  #sheet-backdrop.open, #level-sheet-backdrop.open{ opacity:1; pointer-events:auto; }
 
-  #persona-sheet{
+  #persona-sheet, #level-sheet{
     position:absolute;
     left:0; right:0; bottom:0;
     background: var(--surface);
@@ -349,7 +372,7 @@
     display:flex;
     flex-direction:column;
   }
-  #persona-sheet.open{ transform: translateY(0); }
+  #persona-sheet.open, #level-sheet.open{ transform: translateY(0); }
 
   .sheet-handle{
     width:36px; height:4px; background: var(--border); border-radius:2px;
@@ -516,6 +539,7 @@
       <div class="head-role" id="head-role">Tippe auf das Menü, um zu starten</div>
     </div>
     <div class="stamp" id="head-stamp" style="display:none;"></div>
+    <button class="level-badge" id="level-badge" type="button" aria-haspopup="dialog" aria-label="Sprachniveau ändern"></button>
     <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Hell/Dunkel umschalten">
       <svg id="theme-icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
       <svg id="theme-icon-light" width="17" height="17" viewBox="0 0 24 24" fill="none" style="display:none;"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8 6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -551,6 +575,16 @@
     <div class="persona-list" id="persona-list"></div>
   </div>
 
+  <div id="level-sheet-backdrop"></div>
+  <div id="level-sheet" role="dialog" aria-modal="true" aria-label="Sprachniveau wählen">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">
+      Dein Sprachniveau
+      <small>Bestimmt Satzlänge, Wortschatz und wie streng korrigiert wird.</small>
+    </div>
+    <div class="persona-list" id="level-list"></div>
+  </div>
+
   <div id="confirm-backdrop">
     <div id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-text">
       <p id="confirm-text"></p>
@@ -571,34 +605,22 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 // WebLLM itself. If you swap MODEL_ID for a different model, update
 // MODEL_CONTEXT_TOKENS to match (check the model's mlc-chat-config.json).
 //
-// Bisection test #2 on the iOS Safari memory ceiling. Confirmed so far,
-// on both test iPhones in real Safari (not Edge):
-//   - SmolLM2-135M-Instruct (~360MB VRAM)         -> survives
-//   - Llama-3.2-1B-Instruct-q4f16_1 (879MB VRAM)  -> crashes
-// gemma3-1b-it-q4f16_1 sits in between at 711MB VRAM (verified against
-// WebLLM's config.ts) — this test narrows the safe/crash boundary rather
-// than guessing again. German support: Gemma 3's model card claims
-// training on 140+ languages including German, but only at the
-// model-family level, not confirmed specifically for the 1B variant —
-// weaker guarantee than Llama-3.2-1B's explicit, size-specific German
-// claim. context_window_size is 8192 per its mlc-chat-config.json
-// (verified 2026-08-09), comfortably above MODEL_CONTEXT_TOKENS below.
-const MODEL_ID = "gemma3-1b-it-q4f16_1-MLC";
+// PRODUCTION MODEL DECISION (2026-08-10) — iOS Safari memory ceiling.
+// Confirmed on both test iPhones, in real Safari, after a full clean
+// reset between attempts:
+//   - SmolLM2-135M / 360M-Instruct (~360-376MB VRAM)      -> survive
+//   - gemma3-1b-it-q4f16_1 (711MB VRAM, config bug fixed) -> crashes
+//   - Llama-3.2-1B-Instruct-q4f16_1 (879MB VRAM)          -> crashes
+//   - Qwen2.5-1.5B-Instruct-q4f16_1 (1630MB VRAM)         -> crashes (original)
+// Three independent failures cluster at 711MB+; only the ~360-376MB band
+// is confirmed stable. Settling here rather than continuing to bisect —
+// see README.md for the resulting product trade-off (no model this small
+// has documented German-language training; this is a real quality
+// limitation on iOS specifically, not a bug). context_window_size is
+// 8192 and sliding_window_size is -1 (no conflict) per this model's
+// mlc-chat-config.json (verified 2026-08-10) — no overrides needed.
+const MODEL_ID = "SmolLM2-360M-Instruct-q4f16_1-MLC";
 const MODEL_CONTEXT_TOKENS = 4096;
-
-// Some MLC prebuilt configs (Gemma 3's included: context_window_size 8192
-// AND sliding_window_size 512, both positive — verified against its
-// mlc-chat-config.json) ship in a state WebLLM's engine rejects outright:
-// "Only one of context_window_size and sliding_window_size can be
-// positive." This is a conflict in the model's own published config, not
-// something our app got wrong. Fix (verified against WebLLM's ModelRecord
-// / ChatOptions types, not guessed): clone the model's entry out of
-// webllm.prebuiltAppConfig.model_list and add an `overrides` object
-// forcing sliding_window_size to -1 (disabled) and context_window_size to
-// our own budget cap. Safe to apply unconditionally regardless of
-// MODEL_ID — models that don't use a sliding window already ship with it
-// at -1, so this is a no-op for them.
-const MODEL_OVERRIDES = { sliding_window_size: -1, context_window_size: MODEL_CONTEXT_TOKENS };
 const RESPONSE_RESERVE_TOKENS = 512;   // headroom left for the model's own reply
 const REMINDER_EVERY_N_USER_TURNS = 6; // re-anchor persona/register periodically
 
@@ -678,10 +700,30 @@ const REGISTER_TEXT = {
   du:  { pronoun: "du",  label: "DU"  }
 };
 
-function buildSystemPrompt(p){
+/* ---------------- CEFR levels ---------------- */
+// Standard Council of Europe CEFR descriptors (A1-C2), translated into a
+// generation-time instruction for a small on-device model. Kept short and
+// concrete rather than quoting the full official descriptor text, since
+// the model has to actually follow this every turn, not just "understand"
+// it — a 360M-parameter model's instruction-following is the binding
+// constraint here (see README's "Model choice" section), not our ability
+// to write a more nuanced prompt.
+const CEFR_LEVELS = [
+  { id: "A1", label: "A1 — Anfänger",      instruction: "Sprich in sehr kurzen, einfachen Sätzen (max. 6-8 Wörter). Nutze nur die häufigsten, alltäglichsten Wörter. Präsens bevorzugt, keine Nebensätze." },
+  { id: "A2", label: "A2 — Grundlagen",    instruction: "Sprich in kurzen, einfachen Sätzen. Einfache Vergangenheit (Perfekt) ist erlaubt, aber keine komplexen Nebensätze. Alltagswortschatz." },
+  { id: "B1", label: "B1 — Mittelstufe",   instruction: "Sprich in normalen, aber nicht zu komplexen Sätzen. Einfache Nebensätze sind erlaubt. Etwas breiterer Wortschatz, aber keine seltenen oder sehr formellen Wörter." },
+  { id: "B2", label: "B2 — Fortgeschritten", instruction: "Sprich natürlich, mit Nebensätzen und etwas idiomatischer Sprache, wie mit einem selbstständigen Sprecher. Normaler Alltags- und Themenwortschatz." },
+  { id: "C1", label: "C1 — Kompetent",     instruction: "Sprich vollständig natürlich und nuanciert, mit komplexeren Satzstrukturen, Redewendungen und differenziertem Wortschatz, wie mit einem Muttersprachler." },
+  { id: "C2", label: "C2 — Exzellent",     instruction: "Sprich vollständig natürlich, ohne jede Vereinfachung — komplexe Syntax, Redewendungen, Fachwortschatz wo passend, genau wie mit einem gebildeten Muttersprachler." }
+];
+const DEFAULT_LEVEL_ID = "B1";
+
+function buildSystemPrompt(p, level){
   const r = REGISTER_TEXT[p.register];
   return `Du bist ${p.name}, ${p.bio}
 Du sprichst ausschließlich Deutsch und redest die andere Person mit "${r.pronoun}" an. Bleib während des ganzen Gesprächs konsequent in dieser Rolle und in diesem Register (${p.register === "sie" ? "Sie-Form" : "Du-Form"}).
+
+Sprachniveau der anderen Person: ${level.id} (${level.label.split(" — ")[1]}). ${level.instruction}
 
 Antworte kurz und natürlich, wie in einem echten Gespräch (ein bis drei Sätze), nicht wie ein Aufsatz.
 
@@ -721,6 +763,21 @@ function trimToBudget(history){
 /* ---------------- State ---------------- */
 let engine = null;
 let currentPersona = null;
+// Level persistence: plain localStorage for now (a single scalar value).
+// If/when the progress-tracking stage lands (per README's stated
+// IndexedDB plan for corrections history), this can move into the same
+// database as one more store — not worth standing up IndexedDB just for
+// one field today.
+const LEVEL_KEY = "anrede-level";
+function loadLevel(){
+  let id = null;
+  try { id = localStorage.getItem(LEVEL_KEY); } catch (_) { /* private mode / storage blocked */ }
+  return CEFR_LEVELS.find((l) => l.id === id) || CEFR_LEVELS.find((l) => l.id === DEFAULT_LEVEL_ID);
+}
+function saveLevel(level){
+  try { localStorage.setItem(LEVEL_KEY, level.id); } catch (_) { /* best effort only */ }
+}
+let currentLevel = loadLevel();
 let history = [];         // authoritative transcript, no ephemeral reminders stored here
 let userTurnCount = 0;
 let modelReady = false;
@@ -766,6 +823,11 @@ const el = {
   sheet: document.getElementById("persona-sheet"),
   personaList: document.getElementById("persona-list"),
 
+  levelBadge: document.getElementById("level-badge"),
+  levelSheetBackdrop: document.getElementById("level-sheet-backdrop"),
+  levelSheet: document.getElementById("level-sheet"),
+  levelList: document.getElementById("level-list"),
+
   confirmBackdrop: document.getElementById("confirm-backdrop"),
   confirmText: document.getElementById("confirm-text"),
   confirmOk: document.getElementById("confirm-ok"),
@@ -794,16 +856,12 @@ async function initModel(){
 
   try {
     el.gateStatus.textContent = "Lade Sprachmodell (einmalig, danach offline) …";
-    const appConfig = {
-      ...webllm.prebuiltAppConfig,
-      model_list: webllm.prebuiltAppConfig.model_list.map((m) =>
-        m.model_id === MODEL_ID
-          ? { ...m, overrides: { ...m.overrides, ...MODEL_OVERRIDES } }
-          : m
-      ),
-    };
+    // NOTE: some MLC prebuilt configs (e.g. gemma3-1b-it, tested and
+    // rejected above) ship with an invalid context/sliding-window
+    // combination and need an `appConfig.model_list` override to load at
+    // all (see git history for the pattern if a future model needs it
+    // again). SmolLM2-360M's config is clean — no override needed.
     engine = await webllm.CreateMLCEngine(MODEL_ID, {
-      appConfig,
       initProgressCallback: (report) => {
         const pct = Math.round((report.progress || 0) * 100);
         el.progressFill.style.width = pct + "%";
@@ -895,9 +953,75 @@ function closeSheet(){
 el.menuBtn.addEventListener("click", () => openSheet());
 el.sheetBackdrop.addEventListener("click", closeSheet);
 
+/* ---------------- Level sheet ---------------- */
+function updateLevelBadge(){
+  el.levelBadge.textContent = currentLevel.id;
+}
+function renderLevelList(){
+  el.levelList.innerHTML = "";
+  CEFR_LEVELS.forEach((l) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "level-card" + (currentLevel.id === l.id ? " active" : "");
+    btn.innerHTML = `
+      <div>
+        <div>${l.label}</div>
+      </div>
+      <span class="check">✓</span>
+    `;
+    btn.addEventListener("click", () => selectLevel(l));
+    el.levelList.appendChild(btn);
+  });
+}
+function openLevelSheet(){
+  renderLevelList();
+  el.levelSheetBackdrop.classList.add("open");
+  el.levelSheet.classList.add("open");
+}
+function closeLevelSheet(){
+  el.levelSheetBackdrop.classList.remove("open");
+  el.levelSheet.classList.remove("open");
+  el.levelBadge.focus();
+}
+async function selectLevel(l){
+  if (l.id === currentLevel.id) { closeLevelSheet(); return; }
+  const hasConversation = el.chat.querySelectorAll(".msg").length > 0;
+  if (hasConversation) {
+    const ok = await askConfirm(`Sprachniveau auf ${l.id} ändern? Das aktuelle Gespräch geht dabei verloren.`);
+    if (!ok) return;
+  }
+
+  currentLevel = l;
+  saveLevel(l);
+  updateLevelBadge();
+
+  if (currentPersona) {
+    // Same reset pattern as a persona switch: invalidate any in-flight
+    // generation, rebuild history[0] with the new level's instruction,
+    // clear the visible chat. A level change mid-conversation can't just
+    // patch history in place — everything the model said so far was
+    // generated under the old level's instruction, so keeping it around
+    // would leave a conversation that contradicts its own system prompt.
+    activeRequestId++;
+    if (busy && engine) {
+      try { await engine.interruptGenerate(); } catch (_) { /* best effort */ }
+    }
+    busy = false;
+    hideStopShowSend();
+    history = [{ role: "system", content: buildSystemPrompt(currentPersona, currentLevel) }];
+    userTurnCount = 0;
+    el.chat.innerHTML = "";
+  }
+  closeLevelSheet();
+}
+
+el.levelBadge.addEventListener("click", openLevelSheet);
+el.levelSheetBackdrop.addEventListener("click", closeLevelSheet);
+
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (el.sheet.classList.contains("open")) closeSheet();
+  if (el.levelSheet.classList.contains("open")) closeLevelSheet();
   if (el.confirmBackdrop.classList.contains("open")) closeConfirm(false);
 });
 
@@ -920,7 +1044,7 @@ async function selectPersona(p){
   hideStopShowSend();
 
   currentPersona = p;
-  history = [{ role: "system", content: buildSystemPrompt(p) }];
+  history = [{ role: "system", content: buildSystemPrompt(p, currentLevel) }];
   userTurnCount = 0;
 
   el.headAvatar.className = "avatar " + p.register;
@@ -1206,6 +1330,7 @@ if (window.visualViewport) {
 window.addEventListener("resize", syncViewportHeight);
 syncViewportHeight();
 
+updateLevelBadge();
 initModel();
 </script>
 
